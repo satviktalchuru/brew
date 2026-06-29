@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4E0942153E8396DADB29C6E1 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16ACEC05B21CDA586D4C386E /* RootView.swift */; };
 		7EEBC01E0D61D323F26097D9 /* BrewApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BAD5F123FE1E818332F8B51 /* BrewApp.swift */; };
+		CDB7161C8572CA5FF558668B /* BrewAppSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5B556335685CB7DE50FBB07 /* BrewAppSmokeTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -26,6 +27,7 @@
 		3BAD5F123FE1E818332F8B51 /* BrewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewApp.swift; sourceTree = "<group>"; };
 		3E9D74D009E51623AC31D191 /* BrewAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BrewAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5D4B87664BA2CDAFEBD48211 /* BrewApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BrewApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C5B556335685CB7DE50FBB07 /* BrewAppSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewAppSmokeTests.swift; sourceTree = "<group>"; };
 		CF459F72510E87D01B936A9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -69,6 +71,7 @@
 		D0FBB769FE9A198CCCAF4ED5 /* BrewAppTests */ = {
 			isa = PBXGroup;
 			children = (
+				C5B556335685CB7DE50FBB07 /* BrewAppSmokeTests.swift */,
 			);
 			path = BrewAppTests;
 			sourceTree = "<group>";
@@ -147,6 +150,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CDB7161C8572CA5FF558668B /* BrewAppSmokeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -293,7 +297,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = BrewApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -345,7 +348,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = BrewApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
