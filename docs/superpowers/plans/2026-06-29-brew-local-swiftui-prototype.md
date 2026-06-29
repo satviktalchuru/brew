@@ -99,12 +99,9 @@ import SwiftUI
 
 @main
 struct BrewApp: App {
-    @State private var store = AppStore.seeded()
-
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environment(store)
         }
     }
 }
@@ -151,6 +148,7 @@ git commit -m "chore: scaffold Brew SwiftUI project"
 - Create: `BrewApp/Models/BrewModels.swift`
 - Create: `BrewApp/Data/MockData.swift`
 - Create: `BrewApp/Data/AppStore.swift`
+- Modify: `BrewApp/App/BrewApp.swift`
 
 - [ ] **Step 1: Create model types**
 
@@ -319,16 +317,36 @@ final class AppStore {
 }
 ```
 
-- [ ] **Step 4: Generate and build**
+- [ ] **Step 4: Wire the store into the app entry point**
+
+Update `BrewApp/App/BrewApp.swift`:
+
+```swift
+import SwiftUI
+
+@main
+struct BrewApp: App {
+    @State private var store = AppStore.seeded()
+
+    var body: some Scene {
+        WindowGroup {
+            RootView()
+                .environment(store)
+        }
+    }
+}
+```
+
+- [ ] **Step 5: Generate and build**
 
 Run: `xcodegen generate && xcodebuild -project Brew.xcodeproj -scheme BrewApp -destination 'platform=iOS Simulator,name=iPhone 16' build`
 
 Expected: `** BUILD SUCCEEDED **`.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add BrewApp/Models/BrewModels.swift BrewApp/Data/MockData.swift BrewApp/Data/AppStore.swift project.yml Brew.xcodeproj
+git add BrewApp/Models/BrewModels.swift BrewApp/Data/MockData.swift BrewApp/Data/AppStore.swift BrewApp/App/BrewApp.swift project.yml Brew.xcodeproj
 git commit -m "feat: add local Brew data model"
 ```
 
