@@ -39,6 +39,7 @@
 - Create: `project.yml`
 - Create: `BrewApp/App/BrewApp.swift`
 - Create: `BrewApp/App/RootView.swift`
+- Create: `BrewAppTests/BrewAppSmokeTests.swift`
 
 - [ ] **Step 1: Check for XcodeGen**
 
@@ -72,7 +73,6 @@ targets:
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     info:
       path: BrewApp/Info.plist
       properties:
@@ -107,7 +107,22 @@ struct BrewApp: App {
 }
 ```
 
-- [ ] **Step 4: Create a temporary root view**
+- [ ] **Step 4: Create a smoke test file**
+
+Create `BrewAppTests/BrewAppSmokeTests.swift`:
+
+```swift
+import XCTest
+@testable import BrewApp
+
+final class BrewAppSmokeTests: XCTestCase {
+    func testSmoke() {
+        XCTAssertTrue(true)
+    }
+}
+```
+
+- [ ] **Step 5: Create a temporary root view**
 
 Create `BrewApp/App/RootView.swift`:
 
@@ -123,22 +138,22 @@ struct RootView: View {
 }
 ```
 
-- [ ] **Step 5: Generate the Xcode project**
+- [ ] **Step 6: Generate the Xcode project**
 
 Run: `xcodegen generate`
 
 Expected: `Brew.xcodeproj` is created and the command exits successfully.
 
-- [ ] **Step 6: Build the empty app**
+- [ ] **Step 7: Build the empty app**
 
 Run: `xcodebuild -project Brew.xcodeproj -scheme BrewApp -destination 'platform=iOS Simulator,name=iPhone 16' build`
 
 Expected: `** BUILD SUCCEEDED **`.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add project.yml BrewApp/App/BrewApp.swift BrewApp/App/RootView.swift Brew.xcodeproj
+git add project.yml BrewApp/App/BrewApp.swift BrewApp/App/RootView.swift BrewAppTests/BrewAppSmokeTests.swift Brew.xcodeproj
 git commit -m "chore: scaffold Brew SwiftUI project"
 ```
 
