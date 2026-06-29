@@ -18,6 +18,19 @@ enum MockData {
     static let theoCortadoID = UUID(uuidString: "30000000-0000-0000-0000-000000000005")!
     static let homeBrewID = UUID(uuidString: "30000000-0000-0000-0000-000000000006")!
 
+    static let orangeFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000001")!
+    static let caramelFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000002")!
+    static let blueberryFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000003")!
+    static let jasmineFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000004")!
+    static let mapleFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000005")!
+    static let cocoaFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000006")!
+    static let almondFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000007")!
+    static let vanillaFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000008")!
+    static let toastedGrainFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000009")!
+    static let cloveFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000010")!
+    static let peachFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000011")!
+    static let lemonFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000012")!
+
     static func makeStore() -> AppStore {
         let now = Date.now
         let today = now.addingTimeInterval(-60 * 45)
@@ -112,8 +125,8 @@ enum MockData {
                 wouldOrder: .yes,
                 notes: "Bright, syrupy shot with a clean finish.",
                 flavorTags: [
-                    FlavorTag(category: "Fruit", subcategory: "Citrus", descriptor: "Orange"),
-                    FlavorTag(category: "Sweet", subcategory: "Sugar", descriptor: "Caramel")
+                    FlavorTag(id: orangeFlavorTagID, category: "Fruit", subcategory: "Citrus", descriptor: "Orange"),
+                    FlavorTag(id: caramelFlavorTagID, category: "Sweet", subcategory: "Sugar", descriptor: "Caramel")
                 ],
                 eloScore: 1518,
                 loggedAt: today
@@ -131,8 +144,8 @@ enum MockData {
                 wouldOrder: .yes,
                 notes: "Tea-like body with berry sweetness.",
                 flavorTags: [
-                    FlavorTag(category: "Fruit", subcategory: "Berry", descriptor: "Blueberry"),
-                    FlavorTag(category: "Floral", subcategory: "Fresh", descriptor: "Jasmine")
+                    FlavorTag(id: blueberryFlavorTagID, category: "Fruit", subcategory: "Berry", descriptor: "Blueberry"),
+                    FlavorTag(id: jasmineFlavorTagID, category: "Floral", subcategory: "Fresh", descriptor: "Jasmine")
                 ],
                 eloScore: 1592,
                 loggedAt: thisWeek
@@ -150,8 +163,8 @@ enum MockData {
                 wouldOrder: .maybe,
                 notes: "Smooth and sweet, almost dessert-like.",
                 flavorTags: [
-                    FlavorTag(category: "Sweet", subcategory: "Syrup", descriptor: "Maple"),
-                    FlavorTag(category: "Roast", subcategory: "Chocolate", descriptor: "Cocoa")
+                    FlavorTag(id: mapleFlavorTagID, category: "Sweet", subcategory: "Syrup", descriptor: "Maple"),
+                    FlavorTag(id: cocoaFlavorTagID, category: "Roast", subcategory: "Chocolate", descriptor: "Cocoa")
                 ],
                 eloScore: 1446,
                 loggedAt: earlier
@@ -169,8 +182,8 @@ enum MockData {
                 wouldOrder: .yes,
                 notes: "Balanced milk texture with a nutty base.",
                 flavorTags: [
-                    FlavorTag(category: "Nutty", subcategory: "Tree Nut", descriptor: "Almond"),
-                    FlavorTag(category: "Sweet", subcategory: "Bakery", descriptor: "Vanilla")
+                    FlavorTag(id: almondFlavorTagID, category: "Nutty", subcategory: "Tree Nut", descriptor: "Almond"),
+                    FlavorTag(id: vanillaFlavorTagID, category: "Sweet", subcategory: "Bakery", descriptor: "Vanilla")
                 ],
                 eloScore: 1484,
                 loggedAt: today.addingTimeInterval(-60 * 35)
@@ -188,8 +201,8 @@ enum MockData {
                 wouldOrder: .maybe,
                 notes: "Compact and roasty with a dry finish.",
                 flavorTags: [
-                    FlavorTag(category: "Roast", subcategory: "Toast", descriptor: "Toasted Grain"),
-                    FlavorTag(category: "Spice", subcategory: "Warm", descriptor: "Clove")
+                    FlavorTag(id: toastedGrainFlavorTagID, category: "Roast", subcategory: "Toast", descriptor: "Toasted Grain"),
+                    FlavorTag(id: cloveFlavorTagID, category: "Spice", subcategory: "Warm", descriptor: "Clove")
                 ],
                 eloScore: 1412,
                 loggedAt: thisWeek.addingTimeInterval(-60 * 60 * 6)
@@ -207,8 +220,8 @@ enum MockData {
                 wouldOrder: .yes,
                 notes: "Dialed finer today; better clarity and more sweetness.",
                 flavorTags: [
-                    FlavorTag(category: "Fruit", subcategory: "Stone Fruit", descriptor: "Peach"),
-                    FlavorTag(category: "Acid", subcategory: "Crisp", descriptor: "Lemon")
+                    FlavorTag(id: peachFlavorTagID, category: "Fruit", subcategory: "Stone Fruit", descriptor: "Peach"),
+                    FlavorTag(id: lemonFlavorTagID, category: "Acid", subcategory: "Crisp", descriptor: "Lemon")
                 ],
                 eloScore: 1536,
                 loggedAt: earlier.addingTimeInterval(-60 * 60 * 18)
