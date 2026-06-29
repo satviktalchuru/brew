@@ -73,6 +73,7 @@ targets:
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
     info:
       path: BrewApp/Info.plist
       properties:
@@ -88,6 +89,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.satviktalchuru.brew.tests
+        GENERATE_INFOPLIST_FILE: YES
 ```
 
 - [ ] **Step 3: Create the app entry point**
