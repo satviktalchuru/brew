@@ -64,7 +64,9 @@ final class AppStore {
     func recordComparison(winnerID: UUID, loserID: UUID) {
         guard winnerID != loserID,
               let winnerIndex = drinkLogs.firstIndex(where: { $0.id == winnerID }),
-              let loserIndex = drinkLogs.firstIndex(where: { $0.id == loserID })
+              let loserIndex = drinkLogs.firstIndex(where: { $0.id == loserID }),
+              drinkLogs[winnerIndex].userID == currentUserID,
+              drinkLogs[loserIndex].userID == currentUserID
         else {
             return
         }

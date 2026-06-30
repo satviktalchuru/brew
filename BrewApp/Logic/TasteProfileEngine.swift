@@ -16,7 +16,7 @@ enum TasteProfileEngine {
             return TasteProfile(
                 averageStrength: 0,
                 averageSweetness: 0,
-                roastCounts: [:],
+                roastCounts: roastCounts(from: []),
                 topFlavorDescriptors: [],
                 dominantFamily: nil,
                 identityLabel: "Balanced Explorer"
@@ -25,7 +25,7 @@ enum TasteProfileEngine {
 
         let averageStrength = average(userLogs.map(\.strength))
         let averageSweetness = average(userLogs.map(\.sweetness))
-        let roastCounts = counts(userLogs.map(\.roast))
+        let roastCounts = roastCounts(from: userLogs.map(\.roast))
         let flavorTags = userLogs.flatMap(\.flavorTags)
         let topFlavorDescriptors = topValues(flavorTags.map(\.descriptor))
         let dominantFamily = dominantFlavorFamily(from: flavorTags)
@@ -49,9 +49,16 @@ enum TasteProfileEngine {
         Double(values.reduce(0, +)) / Double(values.count)
     }
 
-    private static func counts<Value: Hashable>(_ values: [Value]) -> [Value: Int] {
-        Dictionary(grouping: values, by: { $0 })
-            .mapValues { $0.count }
+    private static func roastCounts(from roasts: [Roast]) -> [Roast: Int] {
+        var counts: [Roast: Int] = [
+            .light: 0,
+            .medium: 0,
+            .dark: 0
+        ]
+        for roast in roasts {
+            counts[roast, default: 0] += 1
+        }
+        return counts
     }
 
     private static func topValues(_ values: [String], limit: Int = 5) -> [String] {

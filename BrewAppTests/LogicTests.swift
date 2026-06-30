@@ -49,6 +49,18 @@ final class LogicTests: XCTestCase {
         XCTAssertEqual(profile.roastCounts[.dark], 1)
     }
 
+    func testTasteProfileIncludesStableRoastCountKeys() {
+        let store = MockData.makeStore()
+        let profile = TasteProfileEngine.profile(
+            for: MockData.mayaID,
+            logs: store.drinkLogs
+        )
+
+        XCTAssertEqual(profile.roastCounts[.light], 0)
+        XCTAssertEqual(profile.roastCounts[.medium], 1)
+        XCTAssertEqual(profile.roastCounts[.dark], 0)
+    }
+
     func testSeedDataReferencesAreStableAndResolvable() {
         let first = MockData.makeStore()
         let second = MockData.makeStore()
@@ -140,6 +152,22 @@ final class LogicTests: XCTestCase {
 
         store.recordComparison(winnerID: UUID(), loserID: MockData.satvikColdBrewID)
         store.recordComparison(winnerID: MockData.satvikEspressoID, loserID: UUID())
+
+        XCTAssertEqual(store.comparisons, originalComparisons)
+        XCTAssertEqual(
+            Dictionary(uniqueKeysWithValues: store.drinkLogs.map { ($0.id, $0.eloScore) }),
+            originalScoresByID
+        )
+    }
+
+    func testStoreRecordComparisonWithFriendLogDoesNotMutateComparisonsOrScores() {
+        let store = MockData.makeStore()
+        let originalComparisons = store.comparisons
+        let originalScoresByID = Dictionary(
+            uniqueKeysWithValues: store.drinkLogs.map { ($0.id, $0.eloScore) }
+        )
+
+        store.recordComparison(winnerID: MockData.satvikEspressoID, loserID: MockData.mayaLatteID)
 
         XCTAssertEqual(store.comparisons, originalComparisons)
         XCTAssertEqual(
