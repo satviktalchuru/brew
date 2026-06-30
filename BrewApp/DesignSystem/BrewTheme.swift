@@ -31,14 +31,18 @@ enum BrewTheme {
     }
 
     enum Font {
-        static func heading(size: CGFloat, weight: SwiftUI.Font.Weight = .semibold) -> SwiftUI.Font {
-            .custom("Georgia", size: size, relativeTo: .title).weight(weight)
+        static func heading(
+            size: CGFloat,
+            weight: SwiftUI.Font.Weight = .semibold,
+            relativeTo textStyle: SwiftUI.Font.TextStyle
+        ) -> SwiftUI.Font {
+            .custom("Georgia", size: size, relativeTo: textStyle).weight(weight)
         }
 
-        static let largeTitle = heading(size: 34, weight: .bold)
-        static let title = heading(size: 28, weight: .bold)
-        static let title2 = heading(size: 22, weight: .semibold)
-        static let title3 = heading(size: 18, weight: .semibold)
+        static let largeTitle = heading(size: 34, weight: .bold, relativeTo: .largeTitle)
+        static let title = heading(size: 28, weight: .bold, relativeTo: .title)
+        static let title2 = heading(size: 22, weight: .semibold, relativeTo: .title2)
+        static let title3 = heading(size: 18, weight: .semibold, relativeTo: .title3)
         static let body = SwiftUI.Font.system(.body, design: .default)
         static let bodySemibold = SwiftUI.Font.system(.body, design: .default).weight(.semibold)
         static let callout = SwiftUI.Font.system(.callout, design: .default)

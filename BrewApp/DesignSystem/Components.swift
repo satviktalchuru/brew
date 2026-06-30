@@ -39,6 +39,7 @@ struct BrewChip: View {
             if let systemImage {
                 Image(systemName: systemImage)
                     .font(.caption.weight(.semibold))
+                    .accessibilityHidden(true)
             }
 
             Text(title)
@@ -49,6 +50,8 @@ struct BrewChip: View {
         .padding(.vertical, 6)
         .background(backgroundColor)
         .clipShape(Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
     }
 
     private var backgroundColor: Color {
@@ -98,8 +101,9 @@ struct DotRating: View {
                         .frame(width: 8, height: 8)
                 }
             }
-            .accessibilityLabel(accessibilityText)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
     }
 
     private var clampedValue: Int {
@@ -115,15 +119,18 @@ struct DotRating: View {
 struct AvatarView: View {
     var initials: String
     var size: CGFloat = 44
+    private var accessibilityDescription: String
 
     init(initials: String, size: CGFloat = 44) {
         self.initials = initials
         self.size = size
+        self.accessibilityDescription = "Avatar \(initials)"
     }
 
     init(user: BrewUser, size: CGFloat = 44) {
         self.initials = user.initials
         self.size = size
+        self.accessibilityDescription = user.displayName
     }
 
     var body: some View {
@@ -139,7 +146,7 @@ struct AvatarView: View {
                 Circle()
                     .stroke(BrewTheme.Color.raisedSurface.opacity(0.85), lineWidth: 2)
             }
-            .accessibilityLabel("Avatar \(initials)")
+            .accessibilityLabel(accessibilityDescription)
     }
 }
 
@@ -173,7 +180,8 @@ struct BrewPrimaryButton: View {
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: 52)
+            .padding(.vertical, 14)
+            .frame(minHeight: 52)
             .background(isDisabled ? BrewTheme.Color.textTertiary : BrewTheme.Color.accent)
             .clipShape(Capsule())
             .contentShape(Capsule())
@@ -245,7 +253,7 @@ struct DrinkSummaryCard: View {
 
                 chipRow
 
-                HStack(spacing: BrewTheme.Spacing.sm) {
+                FlowLine {
                     DotRating(value: log.sweetness, label: "Sweet")
                     DotRating(value: log.strength, label: "Strong")
                 }
@@ -313,9 +321,14 @@ struct RankedDrinkRow: View {
             Text("\(rank)")
                 .font(BrewTheme.Font.title3)
                 .foregroundStyle(BrewTheme.Color.accent)
-                .frame(width: 34, height: 34)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+                .monospacedDigit()
+                .padding(.horizontal, BrewTheme.Spacing.xs)
+                .padding(.vertical, 6)
+                .frame(minWidth: 34, minHeight: 34)
                 .background(BrewTheme.Color.accentLight)
-                .clipShape(Circle())
+                .clipShape(Capsule())
 
             VStack(alignment: .leading, spacing: BrewTheme.Spacing.xxs) {
                 Text(log.drinkName)
@@ -364,9 +377,93 @@ private struct FlowLine<Content: View>: View {
     }
 
     var body: some View {
-        HStack(spacing: BrewTheme.Spacing.xs) {
+        FlowLayout(spacing: BrewTheme.Spacing.xs, rowSpacing: BrewTheme.Spacing.xs) {
             content
         }
-        .lineLimit(1)
     }
+}
+
+private struct FlowLayout: Layout {
+    var spacing: CGFloat
+    var rowSpacing: CGFloat
+
+    func sizeThatFits(
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) -> CGSize {
+        let availableWidth = proposal.width ?? .infinity
+        let rows = rows(for: subviews, availableWidth: availableWidth)
+        let width = rows.map(\.width).max() ?? 0
+        let height = rows.reduce(CGFloat.zero) { total, row in
+            total + row.height
+        } + rowSpacing * CGFloat(max(rows.count - 1, 0))
+
+        return CGSize(width: width, height: height)
+    }
+
+    func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) {
+        var origin = bounds.origin
+        let rows = rows(for: subviews, availableWidth: bounds.width)
+
+        for row in rows {
+            origin.x = bounds.minX
+
+            for item in row.items {
+                subviews[item.index].place(
+                    at: CGPoint(x: origin.x, y: origin.y + (row.height - item.size.height) / 2),
+                    proposal: ProposedViewSize(item.size)
+                )
+                origin.x += item.size.width + spacing
+            }
+
+            origin.y += row.height + rowSpacing
+        }
+    }
+
+    private func rows(for subviews: Subviews, availableWidth: CGFloat) -> [FlowRow] {
+        var rows: [FlowRow] = []
+        var currentItems: [FlowItem] = []
+        var currentWidth: CGFloat = 0
+        var currentHeight: CGFloat = 0
+        let constrainedWidth = availableWidth.isFinite ? max(availableWidth, 0) : .infinity
+
+        for index in subviews.indices {
+            let size = subviews[index].sizeThatFits(.unspecified)
+            let nextWidth = currentItems.isEmpty ? size.width : currentWidth + spacing + size.width
+
+            if !currentItems.isEmpty && nextWidth > constrainedWidth {
+                rows.append(FlowRow(items: currentItems, width: currentWidth, height: currentHeight))
+                currentItems = [FlowItem(index: index, size: size)]
+                currentWidth = size.width
+                currentHeight = size.height
+            } else {
+                currentItems.append(FlowItem(index: index, size: size))
+                currentWidth = nextWidth
+                currentHeight = max(currentHeight, size.height)
+            }
+        }
+
+        if !currentItems.isEmpty {
+            rows.append(FlowRow(items: currentItems, width: currentWidth, height: currentHeight))
+        }
+
+        return rows
+    }
+}
+
+private struct FlowRow {
+    var items: [FlowItem]
+    var width: CGFloat
+    var height: CGFloat
+}
+
+private struct FlowItem {
+    var index: Int
+    var size: CGSize
 }
