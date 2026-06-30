@@ -50,6 +50,10 @@ final class AppStore {
     }
 
     func toggleLike(logID: UUID) {
+        guard drinkLogs.contains(where: { $0.id == logID }) else {
+            return
+        }
+
         if likedLogIDs.contains(logID) {
             likedLogIDs.remove(logID)
         } else {

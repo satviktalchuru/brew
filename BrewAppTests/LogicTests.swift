@@ -53,13 +53,16 @@ final class LogicTests: XCTestCase {
         let first = MockData.makeStore()
         let second = MockData.makeStore()
 
-        let firstFlavorIDsByDescriptor = Dictionary(
-            uniqueKeysWithValues: first.drinkLogs.flatMap(\.flavorTags).map { ($0.descriptor, $0.id) }
-        )
-        let secondFlavorIDsByDescriptor = Dictionary(
-            uniqueKeysWithValues: second.drinkLogs.flatMap(\.flavorTags).map { ($0.descriptor, $0.id) }
-        )
-        XCTAssertEqual(firstFlavorIDsByDescriptor, secondFlavorIDsByDescriptor)
+        let firstFlavorTags = first.drinkLogs
+            .flatMap(\.flavorTags)
+            .map { ($0.descriptor, $0.id.uuidString) }
+            .sorted { $0.0 == $1.0 ? $0.1 < $1.1 : $0.0 < $1.0 }
+        let secondFlavorTags = second.drinkLogs
+            .flatMap(\.flavorTags)
+            .map { ($0.descriptor, $0.id.uuidString) }
+            .sorted { $0.0 == $1.0 ? $0.1 < $1.1 : $0.0 < $1.0 }
+        XCTAssertEqual(firstFlavorTags.map(\.0), secondFlavorTags.map(\.0))
+        XCTAssertEqual(firstFlavorTags.map(\.1), secondFlavorTags.map(\.1))
 
         let userIDs = Set(first.users.map(\.id))
         let shopIDs = Set(first.shops.map(\.id))
@@ -99,6 +102,15 @@ final class LogicTests: XCTestCase {
         XCTAssertFalse(store.likedLogIDs.contains(unlikedLogID))
     }
 
+    func testStoreToggleLikeWithMissingLogIDDoesNotMutateLikes() {
+        let store = MockData.makeStore()
+        let originalLikedLogIDs = store.likedLogIDs
+
+        store.toggleLike(logID: UUID())
+
+        XCTAssertEqual(store.likedLogIDs, originalLikedLogIDs)
+    }
+
     func testStoreRecordComparisonUpdatesScoresAndAppendsComparison() {
         let store = MockData.makeStore()
         let winnerID = MockData.satvikEspressoID
@@ -119,15 +131,57 @@ final class LogicTests: XCTestCase {
         })
     }
 
+    func testStoreRecordComparisonWithMissingIDsDoesNotMutateComparisonsOrScores() {
+        let store = MockData.makeStore()
+        let originalComparisons = store.comparisons
+        let originalScoresByID = Dictionary(
+            uniqueKeysWithValues: store.drinkLogs.map { ($0.id, $0.eloScore) }
+        )
+
+        store.recordComparison(winnerID: UUID(), loserID: MockData.satvikColdBrewID)
+        store.recordComparison(winnerID: MockData.satvikEspressoID, loserID: UUID())
+
+        XCTAssertEqual(store.comparisons, originalComparisons)
+        XCTAssertEqual(
+            Dictionary(uniqueKeysWithValues: store.drinkLogs.map { ($0.id, $0.eloScore) }),
+            originalScoresByID
+        )
+    }
+
+    func testStoreRankedDrinksFiltersHomeBrewsAndOrdersByElo() {
+        let store = MockData.makeStore()
+
+        let rankedWithoutHomeBrews = store.rankedDrinks(includeHomeBrews: false)
+        XCTAssertEqual(
+            rankedWithoutHomeBrews.map(\.id),
+            [MockData.satvikPourOverID, MockData.satvikEspressoID, MockData.satvikColdBrewID]
+        )
+        XCTAssertFalse(rankedWithoutHomeBrews.contains { $0.isHomeBrew })
+
+        let rankedWithHomeBrews = store.rankedDrinks(includeHomeBrews: true)
+        XCTAssertEqual(
+            rankedWithHomeBrews.map(\.id),
+            [
+                MockData.satvikPourOverID,
+                MockData.homeBrewID,
+                MockData.satvikEspressoID,
+                MockData.satvikColdBrewID
+            ]
+        )
+    }
+
     func testStoreChatRequestActionsUpdateStatus() {
         let store = MockData.makeStore()
         let pendingID = store.chatRequests.first { $0.status == .pending }?.id
-        XCTAssertNotNil(pendingID)
+        guard let pendingID else {
+            XCTFail("Expected seeded pending chat request")
+            return
+        }
 
-        store.acceptChatRequest(pendingID!)
+        store.acceptChatRequest(pendingID)
         XCTAssertEqual(store.chatRequests.first { $0.id == pendingID }?.status, .accepted)
 
-        store.declineChatRequest(pendingID!)
+        store.declineChatRequest(pendingID)
         XCTAssertEqual(store.chatRequests.first { $0.id == pendingID }?.status, .declined)
     }
 }
