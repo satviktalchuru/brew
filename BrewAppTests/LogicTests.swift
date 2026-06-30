@@ -33,17 +33,17 @@ final class LogicTests: XCTestCase {
         })
     }
 
-    func testTasteProfileComputesAveragesAndIdentity() {
+    func testTasteProfileComputesExpectedSeedAveragesFlavorsAndIdentity() {
         let store = MockData.makeStore()
         let profile = TasteProfileEngine.profile(
             for: store.currentUserID,
             logs: store.drinkLogs
         )
 
-        XCTAssertGreaterThan(profile.averageStrength, 0)
-        XCTAssertGreaterThan(profile.averageSweetness, 0)
-        XCTAssertFalse(profile.topFlavorDescriptors.isEmpty)
-        XCTAssertFalse(profile.identityLabel.isEmpty)
+        XCTAssertEqual(profile.averageStrength, 3.75, accuracy: 0.001)
+        XCTAssertEqual(profile.averageSweetness, 3.75, accuracy: 0.001)
+        XCTAssertEqual(profile.topFlavorDescriptors, ["Blueberry", "Caramel", "Cocoa", "Jasmine", "Lemon"])
+        XCTAssertEqual(profile.identityLabel, "Sweet & Bright")
         XCTAssertEqual(profile.roastCounts[.light], 2)
         XCTAssertEqual(profile.roastCounts[.medium], 1)
         XCTAssertEqual(profile.roastCounts[.dark], 1)
