@@ -71,6 +71,11 @@ final class LogicTests: XCTestCase {
                 && logIDs.contains(comparison.winnerLogID)
                 && logIDs.contains(comparison.loserLogID)
         })
+        XCTAssertTrue(first.friendships.allSatisfy { friendship in
+            userIDs.contains(friendship.requesterID)
+                && userIDs.contains(friendship.addresseeID)
+        })
+        XCTAssertTrue(first.friendships.allSatisfy { $0.status == .accepted })
         XCTAssertTrue(first.chatRequests.allSatisfy { request in
             userIDs.contains(request.requesterID)
                 && userIDs.contains(request.addresseeID)
