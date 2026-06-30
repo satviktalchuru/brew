@@ -3,6 +3,7 @@ import Foundation
 struct TasteProfile: Equatable {
     var averageStrength: Double
     var averageSweetness: Double
+    var roastCounts: [Roast: Int]
     var topFlavorDescriptors: [String]
     var dominantFamily: String?
     var identityLabel: String
@@ -15,6 +16,7 @@ enum TasteProfileEngine {
             return TasteProfile(
                 averageStrength: 0,
                 averageSweetness: 0,
+                roastCounts: [:],
                 topFlavorDescriptors: [],
                 dominantFamily: nil,
                 identityLabel: "Balanced Explorer"
@@ -23,6 +25,7 @@ enum TasteProfileEngine {
 
         let averageStrength = average(userLogs.map(\.strength))
         let averageSweetness = average(userLogs.map(\.sweetness))
+        let roastCounts = counts(userLogs.map(\.roast))
         let flavorTags = userLogs.flatMap(\.flavorTags)
         let topFlavorDescriptors = topValues(flavorTags.map(\.descriptor))
         let dominantFamily = dominantFlavorFamily(from: flavorTags)
@@ -35,6 +38,7 @@ enum TasteProfileEngine {
         return TasteProfile(
             averageStrength: averageStrength,
             averageSweetness: averageSweetness,
+            roastCounts: roastCounts,
             topFlavorDescriptors: topFlavorDescriptors,
             dominantFamily: dominantFamily,
             identityLabel: identityLabel
@@ -43,6 +47,11 @@ enum TasteProfileEngine {
 
     private static func average(_ values: [Int]) -> Double {
         Double(values.reduce(0, +)) / Double(values.count)
+    }
+
+    private static func counts<Value: Hashable>(_ values: [Value]) -> [Value: Int] {
+        Dictionary(grouping: values, by: { $0 })
+            .mapValues { $0.count }
     }
 
     private static func topValues(_ values: [String], limit: Int = 5) -> [String] {

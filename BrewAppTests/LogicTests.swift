@@ -44,6 +44,9 @@ final class LogicTests: XCTestCase {
         XCTAssertGreaterThan(profile.averageSweetness, 0)
         XCTAssertFalse(profile.topFlavorDescriptors.isEmpty)
         XCTAssertFalse(profile.identityLabel.isEmpty)
+        XCTAssertEqual(profile.roastCounts[.light], 2)
+        XCTAssertEqual(profile.roastCounts[.medium], 1)
+        XCTAssertEqual(profile.roastCounts[.dark], 1)
     }
 
     func testSeedDataReferencesAreStableAndResolvable() {
