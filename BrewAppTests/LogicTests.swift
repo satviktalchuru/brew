@@ -11,7 +11,10 @@ final class LogicTests: XCTestCase {
     func testPairSelectionExcludesAlreadyComparedPairs() {
         let store = MockData.makeStore()
         let currentLogs = store.drinkLogs.filter { $0.userID == store.currentUserID }
-        XCTAssertGreaterThanOrEqual(currentLogs.count, 3)
+        guard currentLogs.count >= 3 else {
+            XCTFail("Expected at least three current-user logs")
+            return
+        }
 
         let existing = Comparison(
             id: UUID(),
@@ -43,6 +46,7 @@ final class LogicTests: XCTestCase {
         XCTAssertEqual(profile.averageStrength, 3.75, accuracy: 0.001)
         XCTAssertEqual(profile.averageSweetness, 3.75, accuracy: 0.001)
         XCTAssertEqual(profile.topFlavorDescriptors, ["Blueberry", "Caramel", "Cocoa", "Jasmine", "Lemon"])
+        XCTAssertEqual(profile.dominantFamily, "Fruity")
         XCTAssertEqual(profile.identityLabel, "Sweet & Bright")
         XCTAssertEqual(profile.roastCounts[.light], 2)
         XCTAssertEqual(profile.roastCounts[.medium], 1)
@@ -73,8 +77,8 @@ final class LogicTests: XCTestCase {
             .flatMap(\.flavorTags)
             .map { ($0.descriptor, $0.id.uuidString) }
             .sorted { $0.0 == $1.0 ? $0.1 < $1.1 : $0.0 < $1.0 }
-        XCTAssertEqual(firstFlavorTags.map(\.0), secondFlavorTags.map(\.0))
-        XCTAssertEqual(firstFlavorTags.map(\.1), secondFlavorTags.map(\.1))
+        XCTAssertEqual(firstFlavorTags.map { $0.0 }, secondFlavorTags.map { $0.0 })
+        XCTAssertEqual(firstFlavorTags.map { $0.1 }, secondFlavorTags.map { $0.1 })
 
         let userIDs = Set(first.users.map(\.id))
         let shopIDs = Set(first.shops.map(\.id))
@@ -100,6 +104,66 @@ final class LogicTests: XCTestCase {
             userIDs.contains(log.userID)
                 && log.shopID.map { shopIDs.contains($0) } ?? true
         })
+    }
+
+    func testStoreShopLookupReturnsSeedShopAndNilForMissingID() {
+        let store = MockData.makeStore()
+
+        XCTAssertEqual(store.shop(id: MockData.paperPlaneID)?.name, "Paper Plane Coffee")
+        XCTAssertNil(store.shop(id: UUID()))
+    }
+
+    func testStoreUserLookupReturnsSeedUserAndNilForMissingID() {
+        let store = MockData.makeStore()
+
+        XCTAssertEqual(store.user(id: MockData.satvikID)?.username, "satvik")
+        XCTAssertNil(store.user(id: UUID()))
+    }
+
+    func testStoreAddDrinkLogAppendsLog() {
+        let store = MockData.makeStore()
+        let newLogID = UUID()
+        let newLog = DrinkLog(
+            id: newLogID,
+            userID: store.currentUserID,
+            shopID: MockData.paperPlaneID,
+            isHomeBrew: false,
+            drinkName: "Test Cappuccino",
+            brewMethod: .cappuccino,
+            roast: .medium,
+            sweetness: 2,
+            strength: 4,
+            wouldOrder: .maybe,
+            notes: "Added by logic test.",
+            flavorTags: [],
+            eloScore: 1200,
+            loggedAt: .now
+        )
+
+        store.addDrinkLog(newLog)
+
+        XCTAssertTrue(store.drinkLogs.contains { $0.id == newLogID })
+    }
+
+    func testStoreCandidateComparisonPairsUpdatesPendingPairs() {
+        let store = MockData.makeStore()
+
+        let pairs = store.candidateComparisonPairs()
+
+        XCTAssertFalse(pairs.isEmpty)
+        XCTAssertEqual(
+            store.pendingComparisonPairs.map { [$0.0.id, $0.1.id] },
+            pairs.map { [$0.0.id, $0.1.id] }
+        )
+    }
+
+    func testStoreTasteProfileMatchesEngineProfile() {
+        let store = MockData.makeStore()
+
+        XCTAssertEqual(
+            store.tasteProfile(for: store.currentUserID),
+            TasteProfileEngine.profile(for: store.currentUserID, logs: store.drinkLogs)
+        )
     }
 
     func testStoreToggleLikeAddsAndRemovesLogID() {
@@ -152,6 +216,22 @@ final class LogicTests: XCTestCase {
 
         store.recordComparison(winnerID: UUID(), loserID: MockData.satvikColdBrewID)
         store.recordComparison(winnerID: MockData.satvikEspressoID, loserID: UUID())
+
+        XCTAssertEqual(store.comparisons, originalComparisons)
+        XCTAssertEqual(
+            Dictionary(uniqueKeysWithValues: store.drinkLogs.map { ($0.id, $0.eloScore) }),
+            originalScoresByID
+        )
+    }
+
+    func testStoreRecordComparisonWithSameIDDoesNotMutateComparisonsOrScores() {
+        let store = MockData.makeStore()
+        let originalComparisons = store.comparisons
+        let originalScoresByID = Dictionary(
+            uniqueKeysWithValues: store.drinkLogs.map { ($0.id, $0.eloScore) }
+        )
+
+        store.recordComparison(winnerID: MockData.satvikEspressoID, loserID: MockData.satvikEspressoID)
 
         XCTAssertEqual(store.comparisons, originalComparisons)
         XCTAssertEqual(
