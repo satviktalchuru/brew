@@ -36,4 +36,86 @@ final class AppStore {
     static func seeded() -> AppStore {
         MockData.makeStore()
     }
+
+    func shop(id: UUID) -> Shop? {
+        shops.first { $0.id == id }
+    }
+
+    func user(id: UUID) -> BrewUser? {
+        users.first { $0.id == id }
+    }
+
+    func addDrinkLog(_ log: DrinkLog) {
+        drinkLogs.append(log)
+    }
+
+    func toggleLike(logID: UUID) {
+        if likedLogIDs.contains(logID) {
+            likedLogIDs.remove(logID)
+        } else {
+            likedLogIDs.insert(logID)
+        }
+    }
+
+    func recordComparison(winnerID: UUID, loserID: UUID) {
+        guard winnerID != loserID,
+              let winnerIndex = drinkLogs.firstIndex(where: { $0.id == winnerID }),
+              let loserIndex = drinkLogs.firstIndex(where: { $0.id == loserID })
+        else {
+            return
+        }
+
+        let updatedScores = EloCalculator.updatedScores(
+            winner: drinkLogs[winnerIndex].eloScore,
+            loser: drinkLogs[loserIndex].eloScore
+        )
+        drinkLogs[winnerIndex].eloScore = updatedScores.winner
+        drinkLogs[loserIndex].eloScore = updatedScores.loser
+        comparisons.append(
+            Comparison(
+                id: UUID(),
+                userID: currentUserID,
+                winnerLogID: winnerID,
+                loserLogID: loserID,
+                comparedAt: .now
+            )
+        )
+    }
+
+    func candidateComparisonPairs() -> [(DrinkLog, DrinkLog)] {
+        let pairs = RankingEngine.candidatePairs(
+            logs: drinkLogs,
+            comparisons: comparisons,
+            userID: currentUserID,
+            limit: 10
+        )
+        pendingComparisonPairs = pairs
+        return pairs
+    }
+
+    func rankedDrinks(includeHomeBrews: Bool) -> [DrinkLog] {
+        RankingEngine.rankedLogs(
+            drinkLogs.filter { $0.userID == currentUserID },
+            includeHomeBrews: includeHomeBrews
+        )
+    }
+
+    func tasteProfile(for userID: UUID) -> TasteProfile {
+        TasteProfileEngine.profile(for: userID, logs: drinkLogs)
+    }
+
+    func acceptChatRequest(_ id: UUID) {
+        updateChatRequest(id, status: .accepted)
+    }
+
+    func declineChatRequest(_ id: UUID) {
+        updateChatRequest(id, status: .declined)
+    }
+
+    private func updateChatRequest(_ id: UUID, status: CoffeeChatRequest.Status) {
+        guard let index = chatRequests.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+        chatRequests[index].status = status
+    }
 }
