@@ -38,6 +38,7 @@ struct BrewApp: App {
             .onOpenURL { url in
                 store.pendingDeepLink = DeepLink(url: url)
             }
+            .preferredColorScheme(.light)
         }
     }
 }

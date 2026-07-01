@@ -21,9 +21,7 @@ struct HomeView: View {
             .brewScreenBackground()
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Text("brew.")
-                        .font(.system(size: 22, weight: .black, design: .serif))
-                        .foregroundStyle(BrewTheme.Color.accent)
+                    BrewBadge()
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showActivity = true } label: {
@@ -246,5 +244,21 @@ struct HomeView: View {
 
         return [("Today", today), ("This Week", thisWeek), ("Earlier", earlier)]
             .filter { !$0.1.isEmpty }
+    }
+}
+
+private struct BrewBadge: View {
+    var body: some View {
+        ZStack {
+            Circle().fill(Color(red: 0.776, green: 0.357, blue: 0.102))
+            Text("brew.")
+                .font(.system(size: 10, weight: .black, design: .serif))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.3)
+                .padding(3)
+        }
+        .frame(width: 32, height: 32)
+        .accessibilityLabel("brew")
     }
 }
