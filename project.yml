@@ -16,15 +16,22 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.satviktalchuru.brew
-        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
     info:
       path: BrewApp/Info.plist
       properties:
         CFBundleDisplayName: Brew
-        UILaunchScreen: {}
+        NSLocationWhenInUseUsageDescription: "Brew uses your location to show nearby coffee shops and calculate distances."
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - brew
+            CFBundleURLName: com.satviktalchuru.brew
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+          UIImageName: LaunchLogo
+          UIImageRespectsSafeAreaInsets: true
   BrewAppTests:
     type: bundle.unit-test
     platform: iOS

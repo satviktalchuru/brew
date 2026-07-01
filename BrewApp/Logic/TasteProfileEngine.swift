@@ -100,6 +100,34 @@ enum TasteProfileEngine {
         }
     }
 
+    // MARK: - Taste Match
+
+    /// 0–100 compatibility score using cosine similarity on a 5-dim taste vector:
+    /// [sweetness/5, strength/5, light%, medium%, dark%]
+    static func matchScore(userA: UUID, userB: UUID, logs: [DrinkLog]) -> Int {
+        let vecA = tasteVector(for: userA, logs: logs)
+        let vecB = tasteVector(for: userB, logs: logs)
+        guard !vecA.allSatisfy({ $0 == 0 }), !vecB.allSatisfy({ $0 == 0 }) else { return 0 }
+        let dot  = zip(vecA, vecB).map(*).reduce(0, +)
+        let magA = sqrt(vecA.map { $0 * $0 }.reduce(0, +))
+        let magB = sqrt(vecB.map { $0 * $0 }.reduce(0, +))
+        guard magA > 0, magB > 0 else { return 0 }
+        return Int((dot / (magA * magB) * 100).rounded())
+    }
+
+    private static func tasteVector(for userID: UUID, logs: [DrinkLog]) -> [Double] {
+        let ul = logs.filter { $0.userID == userID }
+        guard !ul.isEmpty else { return [0, 0, 0, 0, 0] }
+        let t = Double(ul.count)
+        return [
+            average(ul.map(\.sweetness)) / 5.0,
+            average(ul.map(\.strength)) / 5.0,
+            Double(ul.filter { $0.roast == .light }.count) / t,
+            Double(ul.filter { $0.roast == .medium }.count) / t,
+            Double(ul.filter { $0.roast == .dark }.count) / t,
+        ]
+    }
+
     private static func identity(
         averageStrength: Double,
         averageSweetness: Double,

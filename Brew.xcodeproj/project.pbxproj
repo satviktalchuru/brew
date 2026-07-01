@@ -8,17 +8,38 @@
 
 /* Begin PBXBuildFile section */
 		062825F83FFD597B9F5CFB86 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 463A60A157BC99F533279C01 /* Components.swift */; };
+		2FC7E59949ABE2EE1C77077E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1123640E8C5190D1A53D9C15 /* HomeView.swift */; };
+		3193F6AEFA350C3FE5F5AA8A /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2EDD68D7457134A982CC7A1 /* NotificationService.swift */; };
+		330C5D390AEED6D1FB80371D /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C968216FFBAB9027050A623 /* LocationService.swift */; };
+		33E249F01BAF58476B26F16C /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCE695B254A1F78B38455E64 /* ExploreView.swift */; };
+		36424E9F37EA05D1A1C79C57 /* DrinkDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C29546487072D2150C13BA7 /* DrinkDetailView.swift */; };
 		38629B176F5D87653665928B /* RankingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D698903508203A69322554C2 /* RankingEngine.swift */; };
+		49F1FAB05091382EB4939244 /* FirstPicksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A27E98C6398839ADA52998F5 /* FirstPicksView.swift */; };
 		4A2324FE3A95748A0CCF8573 /* BrewTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818937C3E47D18C83588C996 /* BrewTheme.swift */; };
 		4E0942153E8396DADB29C6E1 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16ACEC05B21CDA586D4C386E /* RootView.swift */; };
+		5234DA7369E507AB850B69C1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA05C9C739A1DE241F461122 /* SettingsView.swift */; };
+		617B37EE6A8663661715911D /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB4F6F56B7586F83B9B2A2C /* SupabaseService.swift */; };
+		7E35D405FA676DB27519CBBC /* RecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09C78E08B4A9A09E1D46E475 /* RecommendationEngine.swift */; };
 		7EEBC01E0D61D323F26097D9 /* BrewApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BAD5F123FE1E818332F8B51 /* BrewApp.swift */; };
+		8766ABD40E8B62BCE8510D74 /* TasteRecapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 013543726FA60DEABAD43FD9 /* TasteRecapView.swift */; };
 		9091FADF44B7BC5BD0024AD0 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 976217AC8CC3594F5F41689D /* AppStore.swift */; };
 		A50BBB763AA7212E1EB06BAE /* LogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119CF6D5208910D3DEE25D5B /* LogicTests.swift */; };
 		B1CA328AEAFF3D64F8148258 /* EloCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5058083F8EF9AC4BC19CCDD /* EloCalculator.swift */; };
+		B7190E977B7CBECDA00EE9B0 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB45492D1D67B650D192206 /* AuthService.swift */; };
 		BA8AEEB0FAEFE79FBC3C5874 /* BrewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3979B6368272F579443645ED /* BrewModels.swift */; };
+		C17A8C5B63960A68FFF93C9C /* FriendProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A391E2AED22FCCE3C7D4B73E /* FriendProfileView.swift */; };
+		C30298EA7A854BDF9E20642E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 182D5D97909C4C0BDEDF16A6 /* Assets.xcassets */; };
+		C3AE7F9C793BD4C493096DC1 /* FlavorWheelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F4A84F8F6254334B8667A1 /* FlavorWheelView.swift */; };
 		CDB7161C8572CA5FF558668B /* BrewAppSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5B556335685CB7DE50FBB07 /* BrewAppSmokeTests.swift */; };
 		D2FE8CFC2EBAEDA96EEDA117 /* TasteProfileEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BAD20520A55B8B78984A732 /* TasteProfileEngine.swift */; };
+		D648BEAC2B8A7A9702C9192A /* TasteQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1FA59D8BDA2DE0F974793B1 /* TasteQuizView.swift */; };
+		D89BFBF228737C7A0BECA6D0 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1D748D9B25E10B361206A36 /* OnboardingView.swift */; };
+		DBFF32F1722D22ED18BD6B9C /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A26C779D55A2997A402638E /* ProfileView.swift */; };
+		E6375151CCD49C66757F6B2F /* FriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 198DCC46AF321172057BFA05 /* FriendsView.swift */; };
+		EC7AD5D21770F964C361D86B /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC38DA5BE3DDDD782CEE946B /* LogView.swift */; };
+		F1D234978E843B7672BCDC99 /* HeadToHeadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D27E0F289EEE84C77AB2C49A /* HeadToHeadView.swift */; };
 		F555674CD8438171EA4A54F8 /* MockData.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE9B634A8F56AB9C8D4BE697 /* MockData.swift */; };
+		F84D5788CE6150295FFDE9BF /* ShopDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCFE1B0BDE5B6360E404D392 /* ShopDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,20 +53,41 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		013543726FA60DEABAD43FD9 /* TasteRecapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteRecapView.swift; sourceTree = "<group>"; };
+		09C78E08B4A9A09E1D46E475 /* RecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationEngine.swift; sourceTree = "<group>"; };
+		0C968216FFBAB9027050A623 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		1123640E8C5190D1A53D9C15 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		119CF6D5208910D3DEE25D5B /* LogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogicTests.swift; sourceTree = "<group>"; };
 		16ACEC05B21CDA586D4C386E /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		182D5D97909C4C0BDEDF16A6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		198DCC46AF321172057BFA05 /* FriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsView.swift; sourceTree = "<group>"; };
+		2BB45492D1D67B650D192206 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		3979B6368272F579443645ED /* BrewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewModels.swift; sourceTree = "<group>"; };
+		3A26C779D55A2997A402638E /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		3BAD5F123FE1E818332F8B51 /* BrewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewApp.swift; sourceTree = "<group>"; };
 		3E9D74D009E51623AC31D191 /* BrewAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BrewAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		463A60A157BC99F533279C01 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		5D4B87664BA2CDAFEBD48211 /* BrewApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BrewApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5EB4F6F56B7586F83B9B2A2C /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
 		7BAD20520A55B8B78984A732 /* TasteProfileEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteProfileEngine.swift; sourceTree = "<group>"; };
+		7C29546487072D2150C13BA7 /* DrinkDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrinkDetailView.swift; sourceTree = "<group>"; };
 		818937C3E47D18C83588C996 /* BrewTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewTheme.swift; sourceTree = "<group>"; };
 		976217AC8CC3594F5F41689D /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
+		A27E98C6398839ADA52998F5 /* FirstPicksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstPicksView.swift; sourceTree = "<group>"; };
+		A391E2AED22FCCE3C7D4B73E /* FriendProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendProfileView.swift; sourceTree = "<group>"; };
+		AC38DA5BE3DDDD782CEE946B /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
+		B2EDD68D7457134A982CC7A1 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		B2F4A84F8F6254334B8667A1 /* FlavorWheelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlavorWheelView.swift; sourceTree = "<group>"; };
+		BCE695B254A1F78B38455E64 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
+		BCFE1B0BDE5B6360E404D392 /* ShopDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShopDetailView.swift; sourceTree = "<group>"; };
 		C5B556335685CB7DE50FBB07 /* BrewAppSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewAppSmokeTests.swift; sourceTree = "<group>"; };
 		CF459F72510E87D01B936A9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		D1FA59D8BDA2DE0F974793B1 /* TasteQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteQuizView.swift; sourceTree = "<group>"; };
+		D27E0F289EEE84C77AB2C49A /* HeadToHeadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadToHeadView.swift; sourceTree = "<group>"; };
 		D5058083F8EF9AC4BC19CCDD /* EloCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EloCalculator.swift; sourceTree = "<group>"; };
 		D698903508203A69322554C2 /* RankingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingEngine.swift; sourceTree = "<group>"; };
+		E1D748D9B25E10B361206A36 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		FA05C9C739A1DE241F461122 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		FE9B634A8F56AB9C8D4BE697 /* MockData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockData.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -73,6 +115,7 @@
 			children = (
 				D5058083F8EF9AC4BC19CCDD /* EloCalculator.swift */,
 				D698903508203A69322554C2 /* RankingEngine.swift */,
+				09C78E08B4A9A09E1D46E475 /* RecommendationEngine.swift */,
 				7BAD20520A55B8B78984A732 /* TasteProfileEngine.swift */,
 			);
 			path = Logic;
@@ -81,12 +124,15 @@
 		7D0243220EEC26ACA1A4ED97 /* BrewApp */ = {
 			isa = PBXGroup;
 			children = (
+				182D5D97909C4C0BDEDF16A6 /* Assets.xcassets */,
 				CF459F72510E87D01B936A9A /* Info.plist */,
 				A2A75CF7A271AD1CEDFC5C84 /* App */,
 				FD52DE50217A99BB217BA100 /* Data */,
 				F0B4EACC15BAEAF448B718F2 /* DesignSystem */,
 				0864BD66E3A55180FF073DD2 /* Logic */,
 				B38C303245A0BB08DE87E147 /* Models */,
+				C720EDCDEA531A855DD92CB3 /* Screens */,
+				CD0FF17BE24A9C7EAA28AC40 /* Services */,
 			);
 			path = BrewApp;
 			sourceTree = "<group>";
@@ -106,6 +152,39 @@
 				3979B6368272F579443645ED /* BrewModels.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		C720EDCDEA531A855DD92CB3 /* Screens */ = {
+			isa = PBXGroup;
+			children = (
+				7C29546487072D2150C13BA7 /* DrinkDetailView.swift */,
+				BCE695B254A1F78B38455E64 /* ExploreView.swift */,
+				A27E98C6398839ADA52998F5 /* FirstPicksView.swift */,
+				B2F4A84F8F6254334B8667A1 /* FlavorWheelView.swift */,
+				A391E2AED22FCCE3C7D4B73E /* FriendProfileView.swift */,
+				198DCC46AF321172057BFA05 /* FriendsView.swift */,
+				D27E0F289EEE84C77AB2C49A /* HeadToHeadView.swift */,
+				1123640E8C5190D1A53D9C15 /* HomeView.swift */,
+				AC38DA5BE3DDDD782CEE946B /* LogView.swift */,
+				E1D748D9B25E10B361206A36 /* OnboardingView.swift */,
+				3A26C779D55A2997A402638E /* ProfileView.swift */,
+				FA05C9C739A1DE241F461122 /* SettingsView.swift */,
+				BCFE1B0BDE5B6360E404D392 /* ShopDetailView.swift */,
+				D1FA59D8BDA2DE0F974793B1 /* TasteQuizView.swift */,
+				013543726FA60DEABAD43FD9 /* TasteRecapView.swift */,
+			);
+			path = Screens;
+			sourceTree = "<group>";
+		};
+		CD0FF17BE24A9C7EAA28AC40 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				2BB45492D1D67B650D192206 /* AuthService.swift */,
+				0C968216FFBAB9027050A623 /* LocationService.swift */,
+				B2EDD68D7457134A982CC7A1 /* NotificationService.swift */,
+				5EB4F6F56B7586F83B9B2A2C /* SupabaseService.swift */,
+			);
+			path = Services;
 			sourceTree = "<group>";
 		};
 		D0FBB769FE9A198CCCAF4ED5 /* BrewAppTests */ = {
@@ -143,6 +222,7 @@
 			buildConfigurationList = 9C39744F02A7958FAEA0231B /* Build configuration list for PBXNativeTarget "BrewApp" */;
 			buildPhases = (
 				E243BD2C6940CF48629DC2BB /* Sources */,
+				77F271ECE78B9D95DA30BBA4 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -204,6 +284,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		77F271ECE78B9D95DA30BBA4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C30298EA7A854BDF9E20642E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		BADF4FE8365BDD7E9D6866F1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -219,15 +310,35 @@
 			buildActionMask = 2147483647;
 			files = (
 				9091FADF44B7BC5BD0024AD0 /* AppStore.swift in Sources */,
+				B7190E977B7CBECDA00EE9B0 /* AuthService.swift in Sources */,
 				7EEBC01E0D61D323F26097D9 /* BrewApp.swift in Sources */,
 				BA8AEEB0FAEFE79FBC3C5874 /* BrewModels.swift in Sources */,
 				4A2324FE3A95748A0CCF8573 /* BrewTheme.swift in Sources */,
 				062825F83FFD597B9F5CFB86 /* Components.swift in Sources */,
+				36424E9F37EA05D1A1C79C57 /* DrinkDetailView.swift in Sources */,
 				B1CA328AEAFF3D64F8148258 /* EloCalculator.swift in Sources */,
+				33E249F01BAF58476B26F16C /* ExploreView.swift in Sources */,
+				49F1FAB05091382EB4939244 /* FirstPicksView.swift in Sources */,
+				C3AE7F9C793BD4C493096DC1 /* FlavorWheelView.swift in Sources */,
+				C17A8C5B63960A68FFF93C9C /* FriendProfileView.swift in Sources */,
+				E6375151CCD49C66757F6B2F /* FriendsView.swift in Sources */,
+				F1D234978E843B7672BCDC99 /* HeadToHeadView.swift in Sources */,
+				2FC7E59949ABE2EE1C77077E /* HomeView.swift in Sources */,
+				330C5D390AEED6D1FB80371D /* LocationService.swift in Sources */,
+				EC7AD5D21770F964C361D86B /* LogView.swift in Sources */,
 				F555674CD8438171EA4A54F8 /* MockData.swift in Sources */,
+				3193F6AEFA350C3FE5F5AA8A /* NotificationService.swift in Sources */,
+				D89BFBF228737C7A0BECA6D0 /* OnboardingView.swift in Sources */,
+				DBFF32F1722D22ED18BD6B9C /* ProfileView.swift in Sources */,
 				38629B176F5D87653665928B /* RankingEngine.swift in Sources */,
+				7E35D405FA676DB27519CBBC /* RecommendationEngine.swift in Sources */,
 				4E0942153E8396DADB29C6E1 /* RootView.swift in Sources */,
+				5234DA7369E507AB850B69C1 /* SettingsView.swift in Sources */,
+				F84D5788CE6150295FFDE9BF /* ShopDetailView.swift in Sources */,
+				617B37EE6A8663661715911D /* SupabaseService.swift in Sources */,
 				D2FE8CFC2EBAEDA96EEDA117 /* TasteProfileEngine.swift in Sources */,
+				D648BEAC2B8A7A9702C9192A /* TasteQuizView.swift in Sources */,
+				8766ABD40E8B62BCE8510D74 /* TasteRecapView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -364,12 +475,11 @@
 		6CB1725F33E7626D790F5124 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = BrewApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -417,12 +527,11 @@
 		ED579D132A27EB166AEB9BB6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = BrewApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

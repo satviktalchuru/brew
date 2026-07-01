@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 
 enum Roast: String, CaseIterable, Identifiable, Codable {
     case light, medium, dark, unknown
@@ -41,6 +42,12 @@ struct Shop: Identifiable, Hashable, Codable {
     var hours: String
     var distance: String
     var heroSymbol: String
+    var latitude: Double = 40.7580
+    var longitude: Double = -73.9855
+
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
 }
 
 struct FlavorTag: Identifiable, Hashable, Codable {
@@ -100,5 +107,69 @@ struct Comparison: Identifiable, Hashable, Codable {
 
     func matches(_ first: UUID, _ second: UUID) -> Bool {
         (winnerLogID == first && loserLogID == second) || (winnerLogID == second && loserLogID == first)
+    }
+}
+
+// MARK: - Shop gradient
+
+extension Shop {
+    var accentHue: Double {
+        let hues: [Double] = [0.07, 0.62, 0.35, 0.55, 0.10, 0.70, 0.45, 0.82, 0.17, 0.50]
+        return hues[abs(name.hashValue) % hues.count]
+    }
+}
+
+// MARK: - Activity Events
+
+struct ActivityEvent: Identifiable {
+    enum Kind {
+        case friendRequest(Friendship)
+        case chatRequest(CoffeeChatRequest, Shop)
+        case friendLog(DrinkLog, BrewUser)
+    }
+    var id = UUID()
+    var kind: Kind
+    var date: Date
+
+    var title: String {
+        switch kind {
+        case .friendRequest: return "Friend request"
+        case .chatRequest(_, let shop): return "Coffee chat at \(shop.name)"
+        case .friendLog(let log, let user):
+            return "\(user.displayName.components(separatedBy: " ").first ?? user.displayName) logged \(log.drinkName)"
+        }
+    }
+
+    var subtitle: String {
+        switch kind {
+        case .friendRequest: return "Wants to connect on Brew"
+        case .chatRequest: return "Wants to meet for coffee"
+        case .friendLog(let log, _):
+            return log.isHomeBrew ? "Home brew" : "\(log.roast.label) · \(log.brewMethod.label)"
+        }
+    }
+
+    var systemImage: String {
+        switch kind {
+        case .friendRequest: return "person.badge.plus.fill"
+        case .chatRequest: return "bubble.left.and.bubble.right.fill"
+        case .friendLog: return "cup.and.saucer.fill"
+        }
+    }
+}
+
+enum DeepLink {
+    case shop(UUID)
+    case drink(UUID)
+
+    init?(url: URL) {
+        guard url.scheme == "brew" else { return nil }
+        let host = url.host ?? ""
+        let id = url.pathComponents.dropFirst().first.flatMap { UUID(uuidString: $0) }
+        switch host {
+        case "shop":  guard let id else { return nil }; self = .shop(id)
+        case "drink": guard let id else { return nil }; self = .drink(id)
+        default: return nil
+        }
     }
 }

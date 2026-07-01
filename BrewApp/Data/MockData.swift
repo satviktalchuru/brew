@@ -5,6 +5,8 @@ enum MockData {
     static let mayaID = UUID(uuidString: "10000000-0000-0000-0000-000000000002")!
     static let theoID = UUID(uuidString: "10000000-0000-0000-0000-000000000003")!
     static let linaID = UUID(uuidString: "10000000-0000-0000-0000-000000000004")!
+    static let priyaID = UUID(uuidString: "10000000-0000-0000-0000-000000000005")!
+    static let marcusID = UUID(uuidString: "10000000-0000-0000-0000-000000000006")!
 
     static let paperPlaneID = UUID(uuidString: "20000000-0000-0000-0000-000000000001")!
     static let emberOakID = UUID(uuidString: "20000000-0000-0000-0000-000000000002")!
@@ -17,6 +19,12 @@ enum MockData {
     static let mayaLatteID = UUID(uuidString: "30000000-0000-0000-0000-000000000004")!
     static let theoCortadoID = UUID(uuidString: "30000000-0000-0000-0000-000000000005")!
     static let homeBrewID = UUID(uuidString: "30000000-0000-0000-0000-000000000006")!
+
+    static let priyaAmericanoID = UUID(uuidString: "30000000-0000-0000-0000-000000000007")!
+    static let priyaCortadoID = UUID(uuidString: "30000000-0000-0000-0000-000000000008")!
+    static let marcusEspressoID = UUID(uuidString: "30000000-0000-0000-0000-000000000009")!
+    static let marcusColdBrewID = UUID(uuidString: "30000000-0000-0000-0000-000000000010")!
+    static let linaLatteID = UUID(uuidString: "30000000-0000-0000-0000-000000000011")!
 
     static let orangeFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000001")!
     static let caramelFlavorTagID = UUID(uuidString: "70000000-0000-0000-0000-000000000002")!
@@ -73,42 +81,32 @@ enum MockData {
                 isCurrentUser: false,
                 isPublic: true,
                 appearInChats: true
+            ),
+            BrewUser(
+                id: priyaID,
+                username: "priya",
+                displayName: "Priya Sharma",
+                initials: "PS",
+                isCurrentUser: false,
+                isPublic: true,
+                appearInChats: true
+            ),
+            BrewUser(
+                id: marcusID,
+                username: "marcus",
+                displayName: "Marcus Chen",
+                initials: "MC",
+                isCurrentUser: false,
+                isPublic: true,
+                appearInChats: false
             )
         ]
 
         let shops = [
-            Shop(
-                id: paperPlaneID,
-                name: "Paper Plane Coffee",
-                address: "718 Valencia St",
-                hours: "7 AM - 5 PM",
-                distance: "0.4 mi",
-                heroSymbol: "paperplane.fill"
-            ),
-            Shop(
-                id: emberOakID,
-                name: "Ember & Oak",
-                address: "2419 Mission St",
-                hours: "8 AM - 6 PM",
-                distance: "0.8 mi",
-                heroSymbol: "flame.fill"
-            ),
-            Shop(
-                id: littleWindowID,
-                name: "Little Window",
-                address: "1328 Castro St",
-                hours: "7 AM - 4 PM",
-                distance: "1.1 mi",
-                heroSymbol: "rectangle.split.3x1.fill"
-            ),
-            Shop(
-                id: ninthStreetID,
-                name: "Ninth Street Espresso",
-                address: "341 9th St",
-                hours: "7 AM - 7 PM",
-                distance: "1.7 mi",
-                heroSymbol: "9.circle.fill"
-            )
+            Shop(id: paperPlaneID,   name: "Paper Plane Coffee",     address: "718 Valencia St",  hours: "7 AM - 5 PM", distance: "0.4 mi", heroSymbol: "paperplane.fill",          latitude: 37.7622, longitude: -122.4216),
+            Shop(id: emberOakID,     name: "Ember & Oak",             address: "2419 Mission St",  hours: "8 AM - 6 PM", distance: "0.8 mi", heroSymbol: "flame.fill",               latitude: 37.7571, longitude: -122.4183),
+            Shop(id: littleWindowID, name: "Little Window",           address: "1328 Castro St",   hours: "7 AM - 4 PM", distance: "1.1 mi", heroSymbol: "rectangle.split.3x1.fill", latitude: 37.7508, longitude: -122.4308),
+            Shop(id: ninthStreetID,  name: "Ninth Street Espresso",   address: "341 9th St",       hours: "7 AM - 7 PM", distance: "1.7 mi", heroSymbol: "9.circle.fill",            latitude: 37.7748, longitude: -122.4098),
         ]
 
         let drinkLogs = [
@@ -225,6 +223,101 @@ enum MockData {
                 ],
                 eloScore: 1536,
                 loggedAt: earlier.addingTimeInterval(-60 * 60 * 18)
+            ),
+            DrinkLog(
+                id: priyaAmericanoID,
+                userID: priyaID,
+                shopID: paperPlaneID,
+                isHomeBrew: false,
+                drinkName: "Iced Americano",
+                brewMethod: .espresso,
+                roast: .medium,
+                sweetness: 2,
+                strength: 5,
+                wouldOrder: .yes,
+                notes: "Clean and bold over ice. No sugar needed.",
+                flavorTags: [
+                    FlavorTag(id: UUID(), category: "Roast", subcategory: "Chocolate", descriptor: "Dark Chocolate"),
+                    FlavorTag(id: UUID(), category: "Fruit", subcategory: "Citrus", descriptor: "Lemon")
+                ],
+                eloScore: 1455,
+                loggedAt: today.addingTimeInterval(-60 * 90)
+            ),
+            DrinkLog(
+                id: priyaCortadoID,
+                userID: priyaID,
+                shopID: littleWindowID,
+                isHomeBrew: false,
+                drinkName: "Light Roast Cortado",
+                brewMethod: .cortado,
+                roast: .light,
+                sweetness: 3,
+                strength: 4,
+                wouldOrder: .yes,
+                notes: "Floral and bright with a lovely milk ratio.",
+                flavorTags: [
+                    FlavorTag(id: UUID(), category: "Floral", subcategory: "Fresh", descriptor: "Jasmine"),
+                    FlavorTag(id: UUID(), category: "Fruit", subcategory: "Stone Fruit", descriptor: "Peach")
+                ],
+                eloScore: 1480,
+                loggedAt: thisWeek.addingTimeInterval(-60 * 60 * 2)
+            ),
+            DrinkLog(
+                id: marcusEspressoID,
+                userID: marcusID,
+                shopID: emberOakID,
+                isHomeBrew: false,
+                drinkName: "Ethiopia Natural Espresso",
+                brewMethod: .espresso,
+                roast: .light,
+                sweetness: 4,
+                strength: 4,
+                wouldOrder: .yes,
+                notes: "Fruit-forward and vibrant. Like drinking wine.",
+                flavorTags: [
+                    FlavorTag(id: UUID(), category: "Fruit", subcategory: "Berry", descriptor: "Blueberry"),
+                    FlavorTag(id: UUID(), category: "Sweet", subcategory: "Sugar", descriptor: "Brown Sugar")
+                ],
+                eloScore: 1512,
+                loggedAt: today.addingTimeInterval(-60 * 120)
+            ),
+            DrinkLog(
+                id: marcusColdBrewID,
+                userID: marcusID,
+                shopID: ninthStreetID,
+                isHomeBrew: false,
+                drinkName: "Nitro Cold Brew",
+                brewMethod: .coldBrew,
+                roast: .dark,
+                sweetness: 3,
+                strength: 5,
+                wouldOrder: .maybe,
+                notes: "Creamy head, heavy body. Bold but one was enough.",
+                flavorTags: [
+                    FlavorTag(id: UUID(), category: "Roast", subcategory: "Chocolate", descriptor: "Cocoa"),
+                    FlavorTag(id: UUID(), category: "Nutty", subcategory: "Tree Nut", descriptor: "Walnut")
+                ],
+                eloScore: 1388,
+                loggedAt: thisWeek.addingTimeInterval(-60 * 60 * 30)
+            ),
+            DrinkLog(
+                id: linaLatteID,
+                userID: linaID,
+                shopID: emberOakID,
+                isHomeBrew: false,
+                drinkName: "Brown Sugar Oat Latte",
+                brewMethod: .latte,
+                roast: .medium,
+                sweetness: 5,
+                strength: 2,
+                wouldOrder: .yes,
+                notes: "Sweet, smooth, very approachable.",
+                flavorTags: [
+                    FlavorTag(id: UUID(), category: "Sweet", subcategory: "Sugar", descriptor: "Brown Sugar"),
+                    FlavorTag(id: UUID(), category: "Sweet", subcategory: "Sugar", descriptor: "Caramel")
+                ],
+                eloScore: 1471,
+                loggedAt: today.addingTimeInterval(-60 * 50)
             )
         ]
 
@@ -240,6 +333,19 @@ enum MockData {
                 requesterID: theoID,
                 addresseeID: satvikID,
                 status: .accepted
+            ),
+            Friendship(
+                id: UUID(uuidString: "40000000-0000-0000-0000-000000000003")!,
+                requesterID: marcusID,
+                addresseeID: satvikID,
+                status: .accepted
+            ),
+            // Priya sent a friend request — shows up in activity feed
+            Friendship(
+                id: UUID(uuidString: "40000000-0000-0000-0000-000000000004")!,
+                requesterID: priyaID,
+                addresseeID: satvikID,
+                status: .pending
             )
         ]
 
@@ -269,6 +375,27 @@ enum MockData {
                 winnerLogID: satvikPourOverID,
                 loserLogID: satvikColdBrewID,
                 comparedAt: thisWeek.addingTimeInterval(-60 * 30)
+            ),
+            Comparison(
+                id: UUID(uuidString: "60000000-0000-0000-0000-000000000002")!,
+                userID: satvikID,
+                winnerLogID: satvikEspressoID,
+                loserLogID: satvikColdBrewID,
+                comparedAt: today.addingTimeInterval(-60 * 10)
+            ),
+            Comparison(
+                id: UUID(uuidString: "60000000-0000-0000-0000-000000000003")!,
+                userID: satvikID,
+                winnerLogID: satvikPourOverID,
+                loserLogID: satvikEspressoID,
+                comparedAt: thisWeek.addingTimeInterval(-60 * 60 * 4)
+            ),
+            Comparison(
+                id: UUID(uuidString: "60000000-0000-0000-0000-000000000004")!,
+                userID: satvikID,
+                winnerLogID: homeBrewID,
+                loserLogID: satvikColdBrewID,
+                comparedAt: thisWeek.addingTimeInterval(-60 * 60 * 48)
             )
         ]
 

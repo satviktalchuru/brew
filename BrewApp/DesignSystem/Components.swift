@@ -119,34 +119,46 @@ struct DotRating: View {
 struct AvatarView: View {
     var initials: String
     var size: CGFloat = 44
+    var image: UIImage? = nil
     private var accessibilityDescription: String
 
-    init(initials: String, size: CGFloat = 44) {
+    init(initials: String, size: CGFloat = 44, image: UIImage? = nil) {
         self.initials = initials
         self.size = size
+        self.image = image
         self.accessibilityDescription = "Avatar \(initials)"
     }
 
-    init(user: BrewUser, size: CGFloat = 44) {
+    init(user: BrewUser, size: CGFloat = 44, image: UIImage? = nil) {
         self.initials = user.initials
         self.size = size
+        self.image = image
         self.accessibilityDescription = user.displayName
     }
 
     var body: some View {
-        Text(initials)
-            .font(.system(size: max(size * 0.34, 11), weight: .semibold, design: .default))
-            .foregroundStyle(BrewTheme.Color.accent)
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            .frame(width: size, height: size)
-            .background(BrewTheme.Color.accentLight)
-            .clipShape(Circle())
-            .overlay {
-                Circle()
-                    .stroke(BrewTheme.Color.raisedSurface.opacity(0.85), lineWidth: 2)
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Text(initials)
+                    .font(.system(size: max(size * 0.34, 11), weight: .semibold, design: .default))
+                    .foregroundStyle(BrewTheme.Color.accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(width: size, height: size)
+                    .background(BrewTheme.Color.accentLight)
             }
-            .accessibilityLabel(accessibilityDescription)
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .overlay {
+            Circle()
+                .stroke(BrewTheme.Color.raisedSurface.opacity(0.85), lineWidth: 2)
+        }
+        .accessibilityLabel(accessibilityDescription)
     }
 }
 
