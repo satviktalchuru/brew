@@ -8,8 +8,12 @@ struct DrinkDetailView: View {
     private var user: BrewUser? { store.user(id: log.userID) }
     private var isOwn: Bool { log.userID == store.currentUserID }
     private var isLiked: Bool { store.likedLogIDs.contains(log.id) }
+    // Read the live copy from the store so ELO reflects any re-ranking.
+    private var live: DrinkLog { store.drinkLogs.first { $0.id == log.id } ?? log }
+    private var canRerank: Bool { isOwn && store.rankedDrinks(includeHomeBrews: true).count > 1 }
 
     @State private var showEdit = false
+    @State private var showRerank = false
 
     var body: some View {
         ScrollView {
@@ -36,6 +40,9 @@ struct DrinkDetailView: View {
         }
         .sheet(isPresented: $showEdit) {
             LogView(store: store, editingLog: log) { _ in }
+        }
+        .sheet(isPresented: $showRerank) {
+            RankPlacementView(store: store, newLog: live) { _ in }
         }
     }
 
@@ -106,9 +113,23 @@ struct DrinkDetailView: View {
                         .font(BrewTheme.Font.captionSemibold)
                         .foregroundStyle(BrewTheme.Color.textSecondary)
                     Spacer()
-                    Text("\(Int(log.eloScore.rounded()))")
+                    Text("\(Int(live.eloScore.rounded()))")
                         .font(BrewTheme.Font.bodySemibold)
                         .foregroundStyle(BrewTheme.Color.textPrimary)
+                }
+                if canRerank {
+                    Button {
+                        showRerank = true
+                    } label: {
+                        Label("Re-rank this coffee", systemImage: "arrow.up.arrow.down")
+                            .font(BrewTheme.Font.captionSemibold)
+                            .foregroundStyle(BrewTheme.Color.accent)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(BrewTheme.Color.accentLight)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
