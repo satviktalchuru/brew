@@ -52,6 +52,24 @@ struct SettingsView: View {
                 Section("About") {
                     LabeledContent("Version", value: appVersion)
                     LabeledContent("Backend", value: backendStatus)
+                    if store.isSyncConfigured {
+                        LabeledContent("Sync") {
+                            if store.isSyncing {
+                                HStack(spacing: 6) {
+                                    ProgressView().controlSize(.small)
+                                    Text("Syncing…").foregroundStyle(BrewTheme.Color.textTertiary)
+                                }
+                            } else if let err = store.syncError {
+                                Text(err)
+                                    .font(BrewTheme.Font.caption)
+                                    .foregroundStyle(.red)
+                                    .multilineTextAlignment(.trailing)
+                            } else {
+                                Label("Up to date", systemImage: "checkmark.circle.fill")
+                                    .foregroundStyle(BrewTheme.Color.success)
+                            }
+                        }
+                    }
                 }
             }
             .navigationTitle("Settings")
