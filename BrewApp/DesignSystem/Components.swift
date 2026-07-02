@@ -242,10 +242,14 @@ struct BrewSectionLabel: View {
 }
 
 struct DrinkSummaryCard: View {
+    var store: AppStore
     var log: DrinkLog
     var shop: Shop?
     var user: BrewUser?
     var showUser: Bool = true
+
+    private var isLiked: Bool { store.likedLogIDs.contains(log.id) }
+    private var likeCount: Int { store.likeCount(for: log.id) }
 
     var body: some View {
         BrewCard {
@@ -297,8 +301,21 @@ struct DrinkSummaryCard: View {
 
                 Spacer(minLength: 0)
 
-                Image(systemName: log.wouldOrder == .yes ? "heart.fill" : "heart")
-                    .foregroundStyle(log.wouldOrder == .yes ? BrewTheme.Color.accent : BrewTheme.Color.textTertiary)
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    store.toggleLike(logID: log.id)
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: isLiked ? "heart.fill" : "heart")
+                            .font(.callout)
+                        if likeCount > 0 {
+                            Text("\(likeCount)")
+                                .font(BrewTheme.Font.caption)
+                        }
+                    }
+                    .foregroundStyle(isLiked ? BrewTheme.Color.accent : BrewTheme.Color.textTertiary)
+                }
+                .buttonStyle(.plain)
             }
         }
     }

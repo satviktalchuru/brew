@@ -145,6 +145,7 @@ struct FriendProfileView: View {
                 ForEach(userLogs.prefix(5)) { log in
                     NavigationLink(value: log) {
                         DrinkSummaryCard(
+                            store: store,
                             log: log,
                             shop: log.shopID.flatMap { store.shop(id: $0) },
                             user: user,

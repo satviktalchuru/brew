@@ -216,6 +216,7 @@ struct ShopDetailView: View {
                 ForEach(shopLogs) { log in
                     NavigationLink(value: log) {
                         DrinkSummaryCard(
+                            store: store,
                             log: log,
                             shop: shop,
                             user: store.user(id: log.userID),

@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     var store: AppStore
     @State private var showActivity = false
+    @State private var scrollToTopTrigger = 0
 
     private var activityCount: Int { store.activityEvents.count }
 
@@ -21,7 +22,8 @@ struct HomeView: View {
             .brewScreenBackground()
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    BrewBadge()
+                    Button { scrollToTopTrigger += 1 } label: { BrewBadge() }
+                        .buttonStyle(.plain)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showActivity = true } label: {
@@ -40,13 +42,16 @@ struct HomeView: View {
     // MARK: - Feed
 
     private var feedList: some View {
+        ScrollViewReader { proxy in
         ScrollView {
             LazyVStack(spacing: BrewTheme.Spacing.sm) {
+                Color.clear.frame(height: 0).id("feedTop")
                 ForEach(groupedFeed, id: \.0) { section, logs in
                     Section {
                         ForEach(logs) { log in
                             NavigationLink(value: log) {
                                 DrinkSummaryCard(
+                                    store: store,
                                     log: log,
                                     shop: log.shopID.flatMap { store.shop(id: $0) },
                                     user: store.user(id: log.userID),
@@ -80,6 +85,10 @@ struct HomeView: View {
         .navigationDestination(for: Shop.self) { shop in
             ShopDetailView(store: store, shop: shop)
         }
+        .onChange(of: scrollToTopTrigger) { _, _ in
+            withAnimation { proxy.scrollTo("feedTop", anchor: .top) }
+        }
+        } // ScrollViewReader
     }
 
     // MARK: - Empty State (has friends, nothing logged yet)
