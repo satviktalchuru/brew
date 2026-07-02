@@ -10,6 +10,7 @@ struct RankPlacementView: View {
     var onComplete: (_ wantsMore: Bool) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("brew.rankingExplainerSeen") private var explainerSeen = false
 
     @State private var ranked: [DrinkLog] = []
     @State private var lo = 0
@@ -17,6 +18,7 @@ struct RankPlacementView: View {
     @State private var results: [(winner: UUID, loser: UUID)] = []
     @State private var isDone = false
     @State private var finalRank = 1
+    @State private var showExplainer = false
 
     private let placementGap = 20.0
 
@@ -34,7 +36,9 @@ struct RankPlacementView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if isDone {
+                if showExplainer {
+                    explainerScreen
+                } else if isDone {
                     resultState
                 } else if let opponent {
                     comparisonState(opponent)
@@ -46,7 +50,7 @@ struct RankPlacementView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    if !isDone {
+                    if !isDone && !showExplainer {
                         Button("Skip") { finalize(at: mid) }
                             .foregroundStyle(BrewTheme.Color.textSecondary)
                     }
@@ -63,7 +67,68 @@ struct RankPlacementView: View {
         ranked = store.rankedDrinks(includeHomeBrews: true).filter { $0.id != newLog.id }
         lo = 0
         hi = ranked.count
-        if ranked.isEmpty { finalize(at: 0) }
+        if ranked.isEmpty {
+            finalize(at: 0)
+        } else if !explainerSeen {
+            showExplainer = true
+        }
+    }
+
+    // MARK: - One-time explainer
+
+    private var explainerScreen: some View {
+        VStack(alignment: .leading, spacing: BrewTheme.Spacing.lg) {
+            Spacer(minLength: BrewTheme.Spacing.xl)
+
+            VStack(alignment: .leading, spacing: BrewTheme.Spacing.xs) {
+                Image(systemName: "list.number")
+                    .font(.system(size: 40))
+                    .foregroundStyle(BrewTheme.Color.accent)
+                Text("How ranking works")
+                    .font(.system(size: 30, weight: .bold, design: .serif))
+                    .foregroundStyle(BrewTheme.Color.textPrimary)
+                Text("No star ratings here — you rank by comparing.")
+                    .font(BrewTheme.Font.callout)
+                    .foregroundStyle(BrewTheme.Color.textSecondary)
+            }
+
+            VStack(alignment: .leading, spacing: BrewTheme.Spacing.md) {
+                explainerRow("1", "arrow.up.arrow.down", "We ask a few quick questions",
+                             "Is this coffee better or worse than another you've had?")
+                explainerRow("2", "chart.bar.fill", "Your ranked list builds itself",
+                             "Each answer places it exactly where it belongs.")
+                explainerRow("3", "sparkles", "Your taste profile gets smarter",
+                             "The more you rank, the better your recommendations.")
+            }
+
+            Spacer()
+
+            BrewPrimaryButton("Let's rank it") {
+                explainerSeen = true
+                withAnimation(.easeInOut(duration: 0.2)) { showExplainer = false }
+            }
+        }
+        .padding(BrewTheme.Spacing.md)
+    }
+
+    private func explainerRow(_ number: String, _ icon: String, _ title: String, _ detail: String) -> some View {
+        HStack(alignment: .top, spacing: BrewTheme.Spacing.sm) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(BrewTheme.Color.accent)
+                .frame(width: 34, height: 34)
+                .background(BrewTheme.Color.accentLight)
+                .clipShape(Circle())
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(BrewTheme.Font.bodySemibold)
+                    .foregroundStyle(BrewTheme.Color.textPrimary)
+                Text(detail)
+                    .font(BrewTheme.Font.caption)
+                    .foregroundStyle(BrewTheme.Color.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 
     // MARK: - Comparison
