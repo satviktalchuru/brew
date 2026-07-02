@@ -28,6 +28,8 @@ final class AppStore {
     var authUserID: UUID?
     var isSyncing = false
     var syncError: String?
+    // Returns a fresh access token when the current one is rejected (401).
+    var tokenRefresher: (() async -> String?)?
 
     var isSyncConfigured: Bool { supabase != nil && accessToken != nil && authUserID != nil }
 

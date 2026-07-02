@@ -43,6 +43,10 @@ extension AppStore {
     // MARK: - Refresh (pull)
 
     func refreshFeed() async {
+        await refreshFeed(attemptRefresh: true)
+    }
+
+    func refreshFeed(attemptRefresh: Bool) async {
         guard let supabase, let token = accessToken, let uid = authUserID else { return }
         await MainActor.run { self.isSyncing = true; self.syncError = nil }
 
@@ -98,6 +102,11 @@ extension AppStore {
                 self.isSyncing = false
             }
         } catch {
+            if attemptRefresh, Self.isUnauthorized(error), let newToken = await tokenRefresher?() {
+                await MainActor.run { self.accessToken = newToken }
+                await refreshFeed(attemptRefresh: false)
+                return
+            }
             await MainActor.run {
                 self.syncError = Self.describe(error)
                 self.isSyncing = false
@@ -122,7 +131,14 @@ extension AppStore {
             do {
                 try await op(supabase, token)
             } catch {
-                await MainActor.run { self.syncError = Self.describe(error) }
+                // On an expired token, refresh once and retry.
+                if Self.isUnauthorized(error), let newToken = await self.tokenRefresher?() {
+                    await MainActor.run { self.accessToken = newToken }
+                    do { try await op(supabase, newToken) }
+                    catch { await MainActor.run { self.syncError = Self.describe(error) } }
+                } else {
+                    await MainActor.run { self.syncError = Self.describe(error) }
+                }
             }
         }
     }
@@ -193,5 +209,12 @@ extension AppStore {
 
     static func describe(_ error: Error) -> String {
         (error as? SupabaseService.SupabaseError)?.errorDescription ?? error.localizedDescription
+    }
+
+    static func isUnauthorized(_ error: Error) -> Bool {
+        if let e = error as? SupabaseService.SupabaseError, case .httpError(let code, _) = e {
+            return code == 401 || code == 403
+        }
+        return false
     }
 }

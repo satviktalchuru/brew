@@ -61,6 +61,7 @@ struct BrewApp: App {
 
     private func configureSyncIfPossible() async {
         guard let session = authService.currentSession else { return }
+        store.tokenRefresher = { await authService.refreshAccessToken()?.accessToken }
         await store.configureSync(supabase: authService.supabase, session: session)
     }
 }

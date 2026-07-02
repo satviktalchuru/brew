@@ -114,6 +114,22 @@ final class AuthService: NSObject {
         }
     }
 
+    // Force a token refresh (used when a request comes back 401). Returns the
+    // new session, or nil if the refresh token is gone/invalid.
+    @discardableResult
+    func refreshAccessToken() async -> SupabaseSession? {
+        guard let refreshToken = currentSession?.refreshToken ?? KeychainStore.read(Self.refreshTokenAccount) else {
+            return nil
+        }
+        do {
+            let session = try await supabase.refreshSession(refreshToken: refreshToken)
+            await MainActor.run { self.apply(session) }
+            return session
+        } catch {
+            return nil
+        }
+    }
+
     // MARK: - Sign Out
 
     func signOut() {
