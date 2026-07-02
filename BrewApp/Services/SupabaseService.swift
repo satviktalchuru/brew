@@ -161,7 +161,7 @@ final class SupabaseService {
     // MARK: - Drink Logs
 
     func fetchDrinkLogs(userID: UUID, accessToken: String) async throws -> [RemoteDrinkLog] {
-        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/drink_logs?user_id=eq.\(userID)&order=logged_at.desc")!
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/drink_logs?user_id=eq.\(userID)&order=logged_at.desc&limit=300")!
         return try await get(url: url, accessToken: accessToken)
     }
 
@@ -194,7 +194,7 @@ final class SupabaseService {
 
     func fetchFriendships(userID: UUID, accessToken: String) async throws -> [RemoteFriendship] {
         let encoded = userID.uuidString
-        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/friendships?or=(requester_id.eq.\(encoded),addressee_id.eq.\(encoded))")!
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/friendships?or=(requester_id.eq.\(encoded),addressee_id.eq.\(encoded))&limit=500")!
         return try await get(url: url, accessToken: accessToken)
     }
 
@@ -213,7 +213,7 @@ final class SupabaseService {
     // MARK: - Chat Requests
 
     func fetchChatRequests(userID: UUID, accessToken: String) async throws -> [RemoteChatRequest] {
-        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/chat_requests?addressee_id=eq.\(userID)&status=eq.pending")!
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/chat_requests?addressee_id=eq.\(userID)&status=eq.pending&limit=100")!
         return try await get(url: url, accessToken: accessToken)
     }
 
@@ -256,7 +256,7 @@ final class SupabaseService {
     // MARK: - Wishlist
 
     func fetchWishlist(userID: UUID, accessToken: String) async throws -> [RemoteWishlistItem] {
-        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/wishlist?user_id=eq.\(userID)&order=created_at.desc")!
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/wishlist?user_id=eq.\(userID)&order=created_at.desc&limit=200")!
         return try await get(url: url, accessToken: accessToken)
     }
 
