@@ -3,7 +3,8 @@ import SwiftUI
 struct LogView: View {
     var store: AppStore
     var editingLog: DrinkLog? = nil
-    var onSaved: ([(DrinkLog, DrinkLog)]) -> Void
+    // Passes the newly created log so it can be ranked (nil when editing).
+    var onSaved: (DrinkLog?) -> Void
 
     @Environment(\.dismiss) private var dismiss
 
@@ -19,7 +20,7 @@ struct LogView: View {
     @State private var selectedFlavors: [String]
     @State private var showShopPicker = false
 
-    init(store: AppStore, editingLog: DrinkLog? = nil, onSaved: @escaping ([(DrinkLog, DrinkLog)]) -> Void) {
+    init(store: AppStore, editingLog: DrinkLog? = nil, onSaved: @escaping (DrinkLog?) -> Void) {
         self.store = store
         self.editingLog = editingLog
         self.onSaved = onSaved
@@ -265,7 +266,7 @@ struct LogView: View {
             updated.flavorTags = tags
             store.updateDrinkLog(updated)
             dismiss()
-            onSaved([])
+            onSaved(nil)
             return
         }
 
@@ -287,9 +288,8 @@ struct LogView: View {
         )
 
         store.addDrinkLog(log)
-        let pairs = store.candidateComparisonPairs()
         dismiss()
-        onSaved(pairs)
+        onSaved(log)
     }
 }
 

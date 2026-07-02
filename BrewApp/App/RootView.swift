@@ -8,6 +8,7 @@ struct RootView: View {
     @State private var showLogSheet = false
     @State private var showHeadToHead = false
     @State private var pendingPairs: [(DrinkLog, DrinkLog)] = []
+    @State private var rankingLog: DrinkLog? = nil
     @State private var deepLinkShop: Shop? = nil
     @State private var deepLinkLog: DrinkLog? = nil
 
@@ -47,7 +48,15 @@ struct RootView: View {
             }
         }
         .sheet(isPresented: $showLogSheet) {
-            LogView(store: store) { pairs in
+            LogView(store: store) { newLog in
+                if let newLog { rankingLog = newLog }
+            }
+        }
+        .sheet(item: $rankingLog) { log in
+            RankPlacementView(store: store, newLog: log) { wantsMore in
+                rankingLog = nil
+                guard wantsMore else { return }
+                let pairs = store.candidateComparisonPairs()
                 if !pairs.isEmpty {
                     pendingPairs = pairs
                     showHeadToHead = true

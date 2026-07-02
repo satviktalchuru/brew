@@ -268,6 +268,20 @@ final class AppStore {
         if isSyncConfigured { pushUpdateLog(updated) }
     }
 
+    // Beli-style placement: after a binary-search comparison flow decides where a
+    // new log ranks, set its ELO to sit between its neighbors and record the
+    // comparisons that got it there (so those pairs aren't re-asked later).
+    func applyPlacement(logID: UUID, score: Double, results: [(winner: UUID, loser: UUID)]) {
+        guard let idx = drinkLogs.firstIndex(where: { $0.id == logID && $0.userID == currentUserID }) else { return }
+        drinkLogs[idx].eloScore = score
+        for r in results where !comparisons.contains(where: { $0.matches(r.winner, r.loser) }) {
+            comparisons.append(
+                Comparison(id: UUID(), userID: currentUserID, winnerLogID: r.winner, loserLogID: r.loser, comparedAt: .now)
+            )
+        }
+        if isSyncConfigured { pushUpdateLog(drinkLogs[idx]) }
+    }
+
     var logStreak: Int {
         let cal = Calendar.current
         let myLogs = drinkLogs.filter { $0.userID == currentUserID }
