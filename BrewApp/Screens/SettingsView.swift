@@ -19,7 +19,7 @@ struct SettingsView: View {
     // Apple Guideline 1.2 requires published developer contact info for
     // reporting concerns. Replace with your real support address/URL.
     private let supportEmail = "satvik.talchuru@gmail.com"
-    private let privacyPolicyURL = URL(string: "https://brewapp.example/privacy")!
+    private let privacyPolicyURL = URL(string: "https://satviktalchuru.github.io/brew/privacy.html")!
 
     var body: some View {
         NavigationStack {
