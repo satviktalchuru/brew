@@ -48,6 +48,24 @@ struct ShopDetailView: View {
         .navigationTitle(shop.name)
         .navigationBarTitleDisplayMode(.inline)
         .brewScreenBackground()
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    if store.isOnWishlist(shopID: shop.id) {
+                        for item in store.myWishlist where item.shopID == shop.id {
+                            store.removeWishlistItem(id: item.id)
+                        }
+                    } else {
+                        store.addWishlistItem(title: shop.name, shopID: shop.id)
+                    }
+                } label: {
+                    Image(systemName: store.isOnWishlist(shopID: shop.id) ? "bookmark.fill" : "bookmark")
+                        .foregroundStyle(BrewTheme.Color.accent)
+                }
+                .accessibilityLabel(store.isOnWishlist(shopID: shop.id) ? "Remove from wishlist" : "Add to wishlist")
+            }
+        }
         .navigationDestination(for: DrinkLog.self) { log in
             DrinkDetailView(store: store, log: log)
         }

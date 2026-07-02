@@ -98,6 +98,15 @@ struct CoffeeChatRequest: Identifiable, Hashable, Codable {
     var requestedAt: Date
 }
 
+struct WishlistItem: Identifiable, Hashable, Codable {
+    var id: UUID
+    var userID: UUID
+    var shopID: UUID?
+    var title: String
+    var note: String
+    var createdAt: Date
+}
+
 struct Comparison: Identifiable, Hashable, Codable {
     var id: UUID
     var userID: UUID

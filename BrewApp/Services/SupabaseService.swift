@@ -228,6 +228,24 @@ final class SupabaseService {
         _ = try await URLSession.shared.data(for: req)
     }
 
+    // MARK: - Wishlist
+
+    func fetchWishlist(userID: UUID, accessToken: String) async throws -> [RemoteWishlistItem] {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/wishlist?user_id=eq.\(userID)&order=created_at.desc")!
+        return try await get(url: url, accessToken: accessToken)
+    }
+
+    func insertWishlistItem(_ item: RemoteWishlistItem, accessToken: String) async throws {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/wishlist")!
+        let _: EmptyResponse = try await post(url: url, body: item.asDictionary(), accessToken: accessToken)
+    }
+
+    func deleteWishlistItem(id: UUID, accessToken: String) async throws {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/wishlist?id=eq.\(id)")!
+        let req = baseRequest(url: url, method: "DELETE", accessToken: accessToken)
+        _ = try await URLSession.shared.data(for: req)
+    }
+
     // MARK: - Private Helpers
 
     private func baseRequest(url: URL, method: String, accessToken: String) -> URLRequest {
@@ -407,6 +425,29 @@ struct RemoteLike: Codable {
         case id
         case logID = "log_id"
         case userID = "user_id"
+    }
+}
+
+struct RemoteWishlistItem: Codable {
+    var id: String
+    var userID: String
+    var shopID: String?
+    var title: String
+    var note: String
+    var createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userID = "user_id"
+        case shopID = "shop_id"
+        case title, note
+        case createdAt = "created_at"
+    }
+
+    func asDictionary() -> [String: Any] {
+        var d: [String: Any] = ["id": id, "user_id": userID, "title": title, "note": note, "created_at": createdAt]
+        if let shopID { d["shop_id"] = shopID }
+        return d
     }
 }
 

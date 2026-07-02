@@ -144,6 +144,36 @@ extension RemoteFriendship {
     }
 }
 
+// MARK: - WishlistItem <-> RemoteWishlistItem
+
+extension RemoteWishlistItem {
+    init(_ item: WishlistItem) {
+        self.init(
+            id: item.id.uuidString,
+            userID: item.userID.uuidString,
+            shopID: item.shopID?.uuidString,
+            title: item.title,
+            note: item.note,
+            createdAt: SupabaseDate.string(from: item.createdAt)
+        )
+    }
+
+    func toWishlistItem() -> WishlistItem? {
+        guard let uuid = UUID(uuidString: id),
+              let userUUID = UUID(uuidString: userID),
+              let created = SupabaseDate.parse(createdAt)
+        else { return nil }
+        return WishlistItem(
+            id: uuid,
+            userID: userUUID,
+            shopID: shopID.flatMap { UUID(uuidString: $0) },
+            title: title,
+            note: note,
+            createdAt: created
+        )
+    }
+}
+
 // MARK: - CoffeeChatRequest <-> RemoteChatRequest
 
 extension RemoteChatRequest {

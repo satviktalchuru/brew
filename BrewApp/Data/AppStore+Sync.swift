@@ -92,6 +92,9 @@ extension AppStore {
                 if UUID(uuidString: row.userID) == uid { mine.insert(logUUID) }
             }
 
+            let wishItems = ((try? await supabase.fetchWishlist(userID: uid, accessToken: token)) ?? [])
+                .compactMap { $0.toWishlistItem() }
+
             await MainActor.run {
                 self.drinkLogs = logs
                 self.friendships = friendships
@@ -99,6 +102,7 @@ extension AppStore {
                 for u in fetchedUsers { self.upsertLocalUser(u) }
                 self.likeCounts = counts
                 self.likedLogIDs = mine
+                self.wishlist = wishItems
                 self.isSyncing = false
             }
         } catch {
@@ -180,6 +184,14 @@ extension AppStore {
 
     func pushChatStatus(id: UUID, status: CoffeeChatRequest.Status) {
         runRemote { try await $0.updateChatRequestStatus(id: id, status: status.rawValue, accessToken: $1) }
+    }
+
+    func pushWishlistItem(_ item: WishlistItem) {
+        runRemote { try await $0.insertWishlistItem(RemoteWishlistItem(item), accessToken: $1) }
+    }
+
+    func pushDeleteWishlistItem(id: UUID) {
+        runRemote { try await $0.deleteWishlistItem(id: id, accessToken: $1) }
     }
 
     // MARK: - Friend search

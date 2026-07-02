@@ -10,6 +10,7 @@ struct ProfileView: View {
     @State private var showRecap = false
     @State private var showComparisons = false
     @State private var showExport = false
+    @State private var showWishlist = false
     @State private var avatarPickerItem: PhotosPickerItem? = nil
 
     enum RankingTab: String, CaseIterable {
@@ -26,6 +27,7 @@ struct ProfileView: View {
                 VStack(spacing: BrewTheme.Spacing.md) {
                     profileHeader
                     tasteProfileCard
+                    wishlistCard
                     rankingsSection
                 }
                 .padding(.vertical, BrewTheme.Spacing.sm)
@@ -68,7 +70,39 @@ struct ProfileView: View {
             .sheet(isPresented: $showComparisons) {
                 ComparisonHistoryView(store: store)
             }
+            .sheet(isPresented: $showWishlist) {
+                WishlistView(store: store)
+            }
         }
+    }
+
+    // MARK: - Wishlist entry
+
+    private var wishlistCard: some View {
+        Button { showWishlist = true } label: {
+            BrewCard {
+                HStack(spacing: BrewTheme.Spacing.sm) {
+                    Image(systemName: "bookmark.fill")
+                        .font(.title3)
+                        .foregroundStyle(BrewTheme.Color.accent)
+                        .frame(width: 32)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Want to Try")
+                            .font(BrewTheme.Font.bodySemibold)
+                            .foregroundStyle(BrewTheme.Color.textPrimary)
+                        Text(store.myWishlist.isEmpty ? "Save coffees & shops for later" : "\(store.myWishlist.count) saved")
+                            .font(BrewTheme.Font.caption)
+                            .foregroundStyle(BrewTheme.Color.textSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(BrewTheme.Color.textTertiary)
+                }
+            }
+            .padding(.horizontal, BrewTheme.Spacing.sm)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Header

@@ -13,6 +13,7 @@ final class AppStore {
     var comparisons: [Comparison]
     var likedLogIDs: Set<UUID>
     var likeCounts: [UUID: Int]
+    var wishlist: [WishlistItem] = []
     var pendingComparisonPairs: [(DrinkLog, DrinkLog)] = []
     var avatarImages: [UUID: Data] = [:]
 
@@ -46,7 +47,8 @@ final class AppStore {
         chatRequests: [CoffeeChatRequest],
         comparisons: [Comparison],
         likedLogIDs: Set<UUID>,
-        likeCounts: [UUID: Int] = [:]
+        likeCounts: [UUID: Int] = [:],
+        wishlist: [WishlistItem] = []
     ) {
         self.currentUserID = currentUserID
         self.users = users
@@ -57,6 +59,7 @@ final class AppStore {
         self.comparisons = comparisons
         self.likedLogIDs = likedLogIDs
         self.likeCounts = likeCounts
+        self.wishlist = wishlist
     }
 
     static func seeded() -> AppStore {
@@ -244,6 +247,38 @@ final class AppStore {
 
     var pendingInboundRequests: [Friendship] {
         friendships.filter { $0.addresseeID == currentUserID && $0.status == .pending }
+    }
+
+    // MARK: - Wishlist (Want to Try)
+
+    var myWishlist: [WishlistItem] {
+        wishlist
+            .filter { $0.userID == currentUserID }
+            .sorted { $0.createdAt > $1.createdAt }
+    }
+
+    func isOnWishlist(shopID: UUID) -> Bool {
+        wishlist.contains { $0.userID == currentUserID && $0.shopID == shopID }
+    }
+
+    @discardableResult
+    func addWishlistItem(title: String, shopID: UUID? = nil, note: String = "") -> WishlistItem {
+        let item = WishlistItem(
+            id: UUID(),
+            userID: currentUserID,
+            shopID: shopID,
+            title: title.trimmingCharacters(in: .whitespaces),
+            note: note.trimmingCharacters(in: .whitespaces),
+            createdAt: .now
+        )
+        wishlist.append(item)
+        if isSyncConfigured { pushWishlistItem(item) }
+        return item
+    }
+
+    func removeWishlistItem(id: UUID) {
+        wishlist.removeAll { $0.id == id && $0.userID == currentUserID }
+        if isSyncConfigured { pushDeleteWishlistItem(id: id) }
     }
 
     // MARK: - Analytics / Discovery
