@@ -44,6 +44,15 @@ struct OnboardingView: View {
                 Spacer()
 
                 VStack(spacing: BrewTheme.Spacing.sm) {
+                    SignInWithAppleButton(.signIn) { request in
+                        request.requestedScopes = [.fullName, .email]
+                    } onCompletion: { _ in
+                        authService.signInWithApple()
+                    }
+                    .signInWithAppleButtonStyle(.black)
+                    .frame(height: 50)
+                    .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.medium))
+
                     Button {
                         authService.signInWithGoogle()
                     } label: {
