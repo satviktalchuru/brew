@@ -300,26 +300,41 @@ private struct ShopPickerSheet: View {
     @Binding var selected: Shop?
     @Environment(\.dismiss) private var dismiss
     @State private var search = ""
+    @State private var liveResults: [Shop] = []
+    @State private var isSearching = false
+    private let places = PlacesService()
 
     var body: some View {
         NavigationStack {
-            List(filtered) { shop in
+            List(results) { shop in
                 Button {
+                    store.registerShop(shop)
                     selected = shop
                     dismiss()
                 } label: {
-                    HStack {
-                        Text(shop.name).foregroundStyle(BrewTheme.Color.textPrimary)
-                        Spacer()
-                        if selected?.id == shop.id {
-                            Image(systemName: "checkmark").foregroundStyle(BrewTheme.Color.accent)
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack {
+                            Text(shop.name).foregroundStyle(BrewTheme.Color.textPrimary)
+                            Spacer()
+                            if selected?.id == shop.id {
+                                Image(systemName: "checkmark").foregroundStyle(BrewTheme.Color.accent)
+                            }
+                        }
+                        if !shop.address.isEmpty {
+                            Text(shop.address)
+                                .font(BrewTheme.Font.caption)
+                                .foregroundStyle(BrewTheme.Color.textTertiary)
                         }
                     }
                 }
             }
+            .overlay {
+                if isSearching { ProgressView() }
+            }
             .navigationTitle("Choose a Shop")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $search, prompt: "Search shops")
+            .searchable(text: $search, prompt: "Search coffee shops nearby")
+            .task(id: search) { await runLiveSearch() }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -328,9 +343,31 @@ private struct ShopPickerSheet: View {
         }
     }
 
-    private var filtered: [Shop] {
+    // Local (already-known) shops first, then live MapKit results not
+    // already present locally — de-duplicated by the shop's deterministic id.
+    private var results: [Shop] {
         guard !search.isEmpty else { return store.shops }
-        return store.shops.filter { $0.name.localizedCaseInsensitiveContains(search) }
+        let local = store.shops.filter {
+            $0.name.localizedCaseInsensitiveContains(search) ||
+            $0.address.localizedCaseInsensitiveContains(search)
+        }
+        let knownIDs = Set(local.map(\.id))
+        return local + liveResults.filter { !knownIDs.contains($0.id) }
+    }
+
+    @MainActor
+    private func runLiveSearch() async {
+        guard search.count >= 2 else {
+            liveResults = []
+            return
+        }
+        try? await Task.sleep(nanoseconds: 350_000_000)
+        if Task.isCancelled { return }
+        isSearching = true
+        let found = await places.searchCoffeeShops(near: store.locationService?.coordinate, query: search)
+        if Task.isCancelled { return }
+        liveResults = found
+        isSearching = false
     }
 }
 

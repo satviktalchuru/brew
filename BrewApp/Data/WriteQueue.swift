@@ -5,6 +5,7 @@ import Foundation
 // silently dropped. The queue is drained automatically the next time a
 // network call succeeds (refreshFeed), including across app relaunches.
 enum PendingWrite: Codable {
+    case upsertShop(RemoteShop)
     case insertLog(RemoteDrinkLog)
     case updateLog(RemoteDrinkLog)
     case deleteLog(id: String)
@@ -76,6 +77,8 @@ final class WriteQueue {
 
     private func apply(_ op: PendingWrite, supabase: SupabaseService, accessToken: String) async throws {
         switch op {
+        case .upsertShop(let shop):
+            try await supabase.upsertShop(shop, accessToken: accessToken)
         case .insertLog(let log):
             try await supabase.insertDrinkLog(log, accessToken: accessToken)
         case .updateLog(let log):

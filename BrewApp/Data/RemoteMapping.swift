@@ -144,6 +144,36 @@ extension RemoteFriendship {
     }
 }
 
+// MARK: - Shop <-> RemoteShop
+
+extension RemoteShop {
+    init(_ shop: Shop) {
+        self.init(
+            id: shop.id.uuidString,
+            name: shop.name,
+            address: shop.address,
+            hours: shop.hours,
+            heroSymbol: shop.heroSymbol,
+            latitude: shop.latitude,
+            longitude: shop.longitude
+        )
+    }
+
+    func toShop() -> Shop? {
+        guard let uuid = UUID(uuidString: id) else { return nil }
+        return Shop(
+            id: uuid,
+            name: name,
+            address: address,
+            hours: hours,
+            distance: "",
+            heroSymbol: heroSymbol,
+            latitude: latitude,
+            longitude: longitude
+        )
+    }
+}
+
 // MARK: - WishlistItem <-> RemoteWishlistItem
 
 extension RemoteWishlistItem {

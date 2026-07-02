@@ -30,6 +30,7 @@
 		9091FADF44B7BC5BD0024AD0 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 976217AC8CC3594F5F41689D /* AppStore.swift */; };
 		A4338629BC8055AE21686AB3 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96399F00FCFADB5D196E1ED8 /* KeychainStore.swift */; };
 		A50BBB763AA7212E1EB06BAE /* LogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119CF6D5208910D3DEE25D5B /* LogicTests.swift */; };
+		AFB2C66754981CCCF4774758 /* PlacesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5DCE9C475C40B89717D2959 /* PlacesService.swift */; };
 		B1CA328AEAFF3D64F8148258 /* EloCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5058083F8EF9AC4BC19CCDD /* EloCalculator.swift */; };
 		B7190E977B7CBECDA00EE9B0 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB45492D1D67B650D192206 /* AuthService.swift */; };
 		BA8AEEB0FAEFE79FBC3C5874 /* BrewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3979B6368272F579443645ED /* BrewModels.swift */; };
@@ -78,7 +79,6 @@
 		3E9D74D009E51623AC31D191 /* BrewAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BrewAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		463A60A157BC99F533279C01 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		4D7963FD44D2CD4CA6FD5764 /* ActivityFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityFeedView.swift; sourceTree = "<group>"; };
-		54901BE77BCD58F15C291523 /* BrewApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BrewApp.entitlements; sourceTree = "<group>"; };
 		54F99D54D574057C8CD09903 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		5D4B87664BA2CDAFEBD48211 /* BrewApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BrewApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5EB4F6F56B7586F83B9B2A2C /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
@@ -107,6 +107,7 @@
 		D698903508203A69322554C2 /* RankingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingEngine.swift; sourceTree = "<group>"; };
 		E1D748D9B25E10B361206A36 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		E551C02F67E179D2D300DFD9 /* RankPlacementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankPlacementView.swift; sourceTree = "<group>"; };
+		F5DCE9C475C40B89717D2959 /* PlacesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesService.swift; sourceTree = "<group>"; };
 		F9AC910048BCA4B5C931DF53 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		FA05C9C739A1DE241F461122 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		FE9B634A8F56AB9C8D4BE697 /* MockData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockData.swift; sourceTree = "<group>"; };
@@ -146,7 +147,6 @@
 			isa = PBXGroup;
 			children = (
 				182D5D97909C4C0BDEDF16A6 /* Assets.xcassets */,
-				54901BE77BCD58F15C291523 /* BrewApp.entitlements */,
 				CF459F72510E87D01B936A9A /* Info.plist */,
 				54F99D54D574057C8CD09903 /* PrivacyInfo.xcprivacy */,
 				A2A75CF7A271AD1CEDFC5C84 /* App */,
@@ -211,6 +211,7 @@
 				96399F00FCFADB5D196E1ED8 /* KeychainStore.swift */,
 				0C968216FFBAB9027050A623 /* LocationService.swift */,
 				B2EDD68D7457134A982CC7A1 /* NotificationService.swift */,
+				F5DCE9C475C40B89717D2959 /* PlacesService.swift */,
 				5EB4F6F56B7586F83B9B2A2C /* SupabaseService.swift */,
 			);
 			path = Services;
@@ -366,6 +367,7 @@
 				F555674CD8438171EA4A54F8 /* MockData.swift in Sources */,
 				3193F6AEFA350C3FE5F5AA8A /* NotificationService.swift in Sources */,
 				D89BFBF228737C7A0BECA6D0 /* OnboardingView.swift in Sources */,
+				AFB2C66754981CCCF4774758 /* PlacesService.swift in Sources */,
 				DBFF32F1722D22ED18BD6B9C /* ProfileView.swift in Sources */,
 				1721EDA84970AAE0F6259423 /* RankPlacementView.swift in Sources */,
 				38629B176F5D87653665928B /* RankingEngine.swift in Sources */,
@@ -529,7 +531,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = BrewApp/BrewApp.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = BrewApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -582,7 +583,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = BrewApp/BrewApp.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = BrewApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

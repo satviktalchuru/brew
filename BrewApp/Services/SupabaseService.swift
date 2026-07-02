@@ -15,6 +15,9 @@ final class SupabaseService {
     enum SupabaseError: LocalizedError {
         case notConfigured
         case httpError(Int, String)
+        // Sign-up succeeded but Supabase's "Confirm email" setting is on, so no
+        // session was issued yet — the user must click the link in their inbox.
+        case confirmationRequired
 
         var errorDescription: String? {
             switch self {
@@ -22,16 +25,13 @@ final class SupabaseService {
                 return "Supabase credentials not configured."
             case .httpError(let code, let message):
                 return "HTTP \(code): \(message)"
+            case .confirmationRequired:
+                return "Check your email to confirm your account before signing in."
             }
         }
     }
 
     // MARK: - Auth
-
-    func signInWithApple(identityToken: String) async throws -> SupabaseSession {
-        let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/token?grant_type=id_token")!
-        return try await post(url: url, body: ["provider": "apple", "id_token": identityToken], requiresAuth: false)
-    }
 
     func signInWithEmail(email: String, password: String) async throws -> SupabaseSession {
         let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/token?grant_type=password")!
@@ -40,7 +40,23 @@ final class SupabaseService {
 
     func signUpWithEmail(email: String, password: String) async throws -> SupabaseSession {
         let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/signup")!
-        return try await post(url: url, body: ["email": email, "password": password], requiresAuth: false)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["email": email, "password": password])
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validate(response: response, data: data)
+
+        // If "Confirm email" is enabled in the Supabase dashboard, signup
+        // returns 200 with a user object but no access_token until the user
+        // clicks the confirmation link — decoding that as a session would
+        // otherwise throw a confusing raw JSON error.
+        if let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           object["access_token"] == nil {
+            throw SupabaseError.confirmationRequired
+        }
+        return try JSONDecoder.supabase.decode(SupabaseSession.self, from: data)
     }
 
     func signOut(accessToken: String) async throws {
@@ -83,6 +99,23 @@ final class SupabaseService {
         return try await get(url: url, accessToken: accessToken)
     }
 
+    // MARK: - Shops (shared directory of real coffee shops, discovered via MapKit)
+
+    func fetchShops(ids: [UUID], accessToken: String) async throws -> [RemoteShop] {
+        guard !ids.isEmpty else { return [] }
+        let joined = ids.map { $0.uuidString }.joined(separator: ",")
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/shops?id=in.(\(joined))")!
+        return try await get(url: url, accessToken: accessToken)
+    }
+
+    func upsertShop(_ shop: RemoteShop, accessToken: String) async throws {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/shops")!
+        var req = baseRequest(url: url, method: "POST", accessToken: accessToken)
+        req.setValue("resolution=ignore-duplicates", forHTTPHeaderField: "Prefer")
+        req.httpBody = try JSONSerialization.data(withJSONObject: shop.asDictionary())
+        _ = try await URLSession.shared.data(for: req)
+    }
+
     // Convenience: search and map to BrewUser domain model
     func searchUsers(accessToken: String, query: String) async throws -> [BrewUser] {
         let remote = try await searchProfiles(query: query, accessToken: accessToken)
@@ -123,31 +156,6 @@ final class SupabaseService {
     func refreshSession(refreshToken: String) async throws -> SupabaseSession {
         let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/token?grant_type=refresh_token")!
         return try await post(url: url, body: ["refresh_token": refreshToken], requiresAuth: false)
-    }
-
-    // MARK: - OAuth (Google, etc.)
-
-    // The URL to open in a web auth session. Supabase handles the provider
-    // handshake and redirects back to `redirectTo` with tokens in the fragment.
-    func oauthAuthorizeURL(provider: String, redirectTo: String) -> URL {
-        var comp = URLComponents(string: "\(SupabaseConfig.projectURL)/auth/v1/authorize")!
-        comp.queryItems = [
-            URLQueryItem(name: "provider", value: provider),
-            URLQueryItem(name: "redirect_to", value: redirectTo)
-        ]
-        return comp.url!
-    }
-
-    // OAuth callbacks return tokens but not the user id; look it up from the token.
-    func fetchUserID(accessToken: String) async throws -> String {
-        let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/user")!
-        var req = URLRequest(url: url)
-        req.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
-        req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        let (data, response) = try await URLSession.shared.data(for: req)
-        try validate(response: response, data: data)
-        struct UserResponse: Decodable { let id: String }
-        return try JSONDecoder().decode(UserResponse.self, from: data).id
     }
 
     // MARK: - Drink Logs
@@ -442,6 +450,27 @@ struct RemoteLike: Codable {
         case id
         case logID = "log_id"
         case userID = "user_id"
+    }
+}
+
+struct RemoteShop: Codable {
+    var id: String
+    var name: String
+    var address: String
+    var hours: String
+    var heroSymbol: String
+    var latitude: Double
+    var longitude: Double
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, address, hours
+        case heroSymbol = "hero_symbol"
+        case latitude, longitude
+    }
+
+    func asDictionary() -> [String: Any] {
+        ["id": id, "name": name, "address": address, "hours": hours,
+         "hero_symbol": heroSymbol, "latitude": latitude, "longitude": longitude]
     }
 }
 

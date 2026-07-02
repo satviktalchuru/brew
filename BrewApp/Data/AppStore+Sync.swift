@@ -102,11 +102,22 @@ extension AppStore {
             let wishItems = ((try? await supabase.fetchWishlist(userID: uid, accessToken: token)) ?? [])
                 .compactMap { $0.toWishlistItem() }
 
+            // Resolve real shops (from MapKit discovery) referenced by logs/wishlist
+            // that this device doesn't already know about, so names/addresses
+            // render for shops a friend logged at first.
+            let knownShopIDs = Set(shops.map(\.id))
+            let referencedShopIDs = Set(logs.compactMap(\.shopID))
+                .union(wishItems.compactMap(\.shopID))
+                .subtracting(knownShopIDs)
+            let fetchedShops = ((try? await supabase.fetchShops(ids: Array(referencedShopIDs), accessToken: token)) ?? [])
+                .compactMap { $0.toShop() }
+
             await MainActor.run {
                 self.drinkLogs = logs
                 self.friendships = friendships
                 self.chatRequests = chats
                 for u in fetchedUsers { self.upsertLocalUser(u) }
+                for s in fetchedShops where !self.shops.contains(where: { $0.id == s.id }) { self.shops.append(s) }
                 self.likeCounts = counts
                 self.likedLogIDs = mine
                 self.wishlist = wishItems
@@ -166,6 +177,11 @@ extension AppStore {
 
     func pushDeleteLog(id: UUID) {
         runRemote(retryable: .deleteLog(id: id.uuidString)) { try await $0.deleteDrinkLog(id: id, accessToken: $1) }
+    }
+
+    func pushShop(_ shop: Shop) {
+        let remote = RemoteShop(shop)
+        runRemote(retryable: .upsertShop(remote)) { try await $0.upsertShop(remote, accessToken: $1) }
     }
 
     func pushLike(logID: UUID, liked: Bool) {

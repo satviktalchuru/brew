@@ -70,6 +70,18 @@ final class AppStore {
         shops.first { $0.id == id }
     }
 
+    // Adds a real-world shop discovered via MapKit search (or re-selects an
+    // already-known one) into the local cache, and syncs it to the shared
+    // shops directory so friends can resolve its name/address too.
+    func registerShop(_ shop: Shop) {
+        if let idx = shops.firstIndex(where: { $0.id == shop.id }) {
+            shops[idx] = shop
+        } else {
+            shops.append(shop)
+        }
+        if isSyncConfigured { pushShop(shop) }
+    }
+
     func user(id: UUID) -> BrewUser? {
         users.first { $0.id == id }
     }

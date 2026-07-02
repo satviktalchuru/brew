@@ -7,6 +7,9 @@ struct ExploreView: View {
     @State private var showMap = false
     @State private var selectedShop: Shop?
     @State private var activeFilter: ExploreFilter = .all
+    @State private var liveResults: [Shop] = []
+    @State private var isSearchingLive = false
+    private let places = PlacesService()
 
     enum ExploreFilter: String, CaseIterable, Identifiable {
         case all = "All"
@@ -38,6 +41,7 @@ struct ExploreView: View {
             }
             .navigationTitle("Explore")
             .searchable(text: $searchText, prompt: "Search coffee shops")
+            .task(id: searchText) { await runLiveSearch() }
             .brewScreenBackground()
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -83,6 +87,7 @@ struct ExploreView: View {
                                 .padding(.horizontal, BrewTheme.Spacing.sm)
                         }
                         .buttonStyle(.plain)
+                        .simultaneousGesture(TapGesture().onEnded { store.registerShop(shop) })
                     }
                 }
             }
@@ -165,14 +170,36 @@ struct ExploreView: View {
     }
 
     private var filteredShops: [Shop] {
-        let text = searchText.isEmpty ? store.shops : store.shops.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            $0.address.localizedCaseInsensitiveContains(searchText)
+        let text: [Shop]
+        if searchText.isEmpty {
+            text = store.shops
+        } else {
+            let local = store.shops.filter {
+                $0.name.localizedCaseInsensitiveContains(searchText) ||
+                $0.address.localizedCaseInsensitiveContains(searchText)
+            }
+            let knownIDs = Set(local.map(\.id))
+            text = local + liveResults.filter { !knownIDs.contains($0.id) }
         }
         guard let method = activeFilter.method else { return text }
         return text.filter { shop in
             store.drinkLogs.contains { $0.shopID == shop.id && $0.brewMethod == method }
         }
+    }
+
+    @MainActor
+    private func runLiveSearch() async {
+        guard searchText.count >= 2 else {
+            liveResults = []
+            return
+        }
+        try? await Task.sleep(nanoseconds: 350_000_000)
+        if Task.isCancelled { return }
+        isSearchingLive = true
+        let found = await places.searchCoffeeShops(near: store.locationService?.coordinate, query: searchText)
+        if Task.isCancelled { return }
+        liveResults = found
+        isSearchingLive = false
     }
 
     private func logCount(for shop: Shop) -> Int {
