@@ -58,6 +58,25 @@ struct TasteRecapView: View {
                         ))
                         .animation(.spring(response: 0.45, dampingFraction: 0.82), value: cardIndex)
                         .padding(.horizontal, BrewTheme.Spacing.md)
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 24)
+                                .onEnded { value in
+                                    if value.translation.width < -40 {
+                                        // swipe left -> back
+                                        if cardIndex > 0 {
+                                            withAnimation { cardIndex -= 1 }
+                                        }
+                                    } else if value.translation.width > 40 {
+                                        // swipe right -> next (or finish on the last card)
+                                        if cardIndex < cards.count - 1 {
+                                            withAnimation { cardIndex += 1 }
+                                        } else {
+                                            dismiss()
+                                        }
+                                    }
+                                }
+                        )
 
                     Spacer(minLength: 0)
 
@@ -71,51 +90,13 @@ struct TasteRecapView: View {
                     }
                     .padding(.bottom, BrewTheme.Spacing.sm)
 
-                    HStack(spacing: BrewTheme.Spacing.md) {
-                        if cardIndex > 0 {
-                            Button {
-                                withAnimation { cardIndex -= 1 }
-                            } label: {
-                                Label("Back", systemImage: "chevron.left")
-                                    .foregroundStyle(.white.opacity(0.7))
-                                    .padding(.horizontal, BrewTheme.Spacing.md)
-                                    .padding(.vertical, 10)
-                                    .background(.white.opacity(0.1))
-                                    .clipShape(Capsule())
-                            }
-                        }
-                        Spacer()
-                        if cardIndex < cards.count - 1 {
-                            Button {
-                                withAnimation { cardIndex += 1 }
-                            } label: {
-                                Label("Next", systemImage: "chevron.right")
-                                    .labelStyle(.titleAndIcon)
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, BrewTheme.Spacing.md)
-                                    .padding(.vertical, 10)
-                                    .background(Color(recapHex: "#C65B1A"))
-                                    .clipShape(Capsule())
-                            }
-                        } else {
-                            Button {
-                                dismiss()
-                            } label: {
-                                Text("Finish")
-                                    .font(BrewTheme.Font.bodySemibold)
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, BrewTheme.Spacing.lg)
-                                    .padding(.vertical, 10)
-                                    .background(Color(recapHex: "#C65B1A"))
-                                    .clipShape(Capsule())
-                            }
-                        }
-                    }
-                    .padding(.horizontal, BrewTheme.Spacing.md)
-                    .padding(.bottom, BrewTheme.Spacing.lg)
+                    Text(cardIndex < cards.count - 1 ? "Swipe to continue" : "Swipe right to finish")
+                        .font(BrewTheme.Font.caption)
+                        .foregroundStyle(.white.opacity(0.4))
+                        .padding(.bottom, BrewTheme.Spacing.lg)
                 }
             }
-            .navigationTitle("\(year) in Brew")
+            .navigationTitle("\(String(year)) in Brew")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {

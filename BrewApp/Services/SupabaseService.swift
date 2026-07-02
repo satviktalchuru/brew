@@ -59,6 +59,21 @@ final class SupabaseService {
         return try JSONDecoder.supabase.decode(SupabaseSession.self, from: data)
     }
 
+    // Triggers Supabase's built-in "reset password" email, which contains a
+    // link back into the app to set a new password. Supabase returns 200
+    // with an empty body regardless of whether the email exists, so callers
+    // shouldn't use success/failure here to infer account existence.
+    func sendPasswordReset(email: String) async throws {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/recover")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["email": email])
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validate(response: response, data: data)
+    }
+
     func signOut(accessToken: String) async throws {
         let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/logout")!
         var request = URLRequest(url: url)

@@ -18,9 +18,13 @@ extension AppStore {
         self.accessToken = session.accessToken
         self.authUserID = uid
         self.currentUserID = uid
-        // Drop seeded mock comparisons so they don't leak into a real account.
-        // (eloScore itself is persisted per drink_log, so rankings survive.)
+        // Drop seeded mock comparisons, shops, and users so they don't leak
+        // into a real account. (eloScore itself is persisted per drink_log,
+        // so rankings survive.) refreshFeed() below repopulates shops/users
+        // from real data as they're actually referenced.
         self.comparisons = []
+        self.shops = []
+        self.users = []
 
         // Load this user's own profile so their name/username render correctly.
         do {

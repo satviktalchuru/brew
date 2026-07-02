@@ -6,6 +6,7 @@ final class AuthService {
     private(set) var isAuthenticated: Bool
     private(set) var currentSession: SupabaseSession?
     private(set) var error: String?
+    private(set) var resetPasswordMessage: String?
 
     // Exposed so AppStore can be configured for sync once a session exists.
     let supabase = SupabaseService()
@@ -28,6 +29,21 @@ final class AuthService {
     func signUpWithEmail(email: String, password: String) async {
         await perform {
             try await self.supabase.signUpWithEmail(email: email, password: password)
+        }
+    }
+
+    func sendPasswordReset(email: String) async {
+        error = nil
+        resetPasswordMessage = nil
+        do {
+            try await supabase.sendPasswordReset(email: email)
+            await MainActor.run {
+                self.resetPasswordMessage = "If that email has an account, a reset link is on its way."
+            }
+        } catch let e as SupabaseService.SupabaseError {
+            await MainActor.run { self.error = e.errorDescription }
+        } catch {
+            await MainActor.run { self.error = error.localizedDescription }
         }
     }
 

@@ -8,6 +8,7 @@ struct ExploreView: View {
     @State private var selectedShop: Shop?
     @State private var activeFilter: ExploreFilter = .all
     @State private var liveResults: [Shop] = []
+    @State private var nearbyResults: [Shop] = []
     @State private var isSearchingLive = false
     private let places = PlacesService()
 
@@ -41,6 +42,7 @@ struct ExploreView: View {
             }
             .navigationTitle("Explore")
             .searchable(text: $searchText, prompt: "Search coffee shops")
+            .task { await loadNearby() }
             .task(id: searchText) { await runLiveSearch() }
             .brewScreenBackground()
             .toolbar {
@@ -172,7 +174,8 @@ struct ExploreView: View {
     private var filteredShops: [Shop] {
         let text: [Shop]
         if searchText.isEmpty {
-            text = store.shops
+            let knownIDs = Set(store.shops.map(\.id))
+            text = store.shops + nearbyResults.filter { !knownIDs.contains($0.id) }
         } else {
             let local = store.shops.filter {
                 $0.name.localizedCaseInsensitiveContains(searchText) ||
@@ -185,6 +188,23 @@ struct ExploreView: View {
         return text.filter { shop in
             store.drinkLogs.contains { $0.shopID == shop.id && $0.brewMethod == method }
         }
+    }
+
+    // Populates the default (no-search-text) list with real cafes near the
+    // user instead of leaving it to whatever happens to already be in
+    // store.shops. Waits briefly for a location fix since permission may
+    // still be resolving right as this view first appears.
+    @MainActor
+    private func loadNearby() async {
+        guard nearbyResults.isEmpty else { return }
+        var coordinate = store.locationService?.coordinate
+        var attempts = 0
+        while coordinate == nil && attempts < 10 {
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            coordinate = store.locationService?.coordinate
+            attempts += 1
+        }
+        nearbyResults = await places.searchCoffeeShops(near: coordinate, query: "coffee")
     }
 
     @MainActor

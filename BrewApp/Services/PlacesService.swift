@@ -27,10 +27,41 @@ final class PlacesService {
 
         do {
             let response = try await MKLocalSearch(request: request).start()
-            return response.mapItems.compactMap(Self.makeShop)
+            let shops = response.mapItems.compactMap(Self.makeShop)
+            return Self.deduplicated(shops)
         } catch {
             return []
         }
+    }
+
+    // MKLocalSearch frequently returns the same physical location twice under
+    // slightly different name variants (e.g. "Starbucks" vs "Starbucks Coffee",
+    // or a listing plus its drive-thru/reserve sibling at the same address).
+    // Collapse anything within ~60m whose names are near-identical once
+    // normalized, keeping the first (closest-match) result MapKit returned.
+    static func deduplicated(_ shops: [Shop]) -> [Shop] {
+        var kept: [Shop] = []
+        for shop in shops {
+            let location = CLLocation(latitude: shop.latitude, longitude: shop.longitude)
+            let isDuplicate = kept.contains { existing in
+                let existingLocation = CLLocation(latitude: existing.latitude, longitude: existing.longitude)
+                guard location.distance(from: existingLocation) < 60 else { return false }
+                return namesLikelySamePlace(shop.name, existing.name)
+            }
+            if !isDuplicate { kept.append(shop) }
+        }
+        return kept
+    }
+
+    private static func normalizedName(_ name: String) -> String {
+        name.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted).joined()
+    }
+
+    private static func namesLikelySamePlace(_ a: String, _ b: String) -> Bool {
+        let na = normalizedName(a)
+        let nb = normalizedName(b)
+        guard !na.isEmpty, !nb.isEmpty else { return false }
+        return na == nb || na.contains(nb) || nb.contains(na)
     }
 
     static func makeShop(from item: MKMapItem) -> Shop? {
