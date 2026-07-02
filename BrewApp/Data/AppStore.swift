@@ -119,7 +119,7 @@ final class AppStore {
             addresseeID: addresseeID,
             shopID: shopID,
             status: .pending,
-            requestedAt: .now
+            requestedAt: Date()
         )
         chatRequests.append(request)
         if isSyncConfigured { pushChatRequest(request) }
@@ -150,7 +150,7 @@ final class AppStore {
                 userID: currentUserID,
                 winnerLogID: winnerID,
                 loserLogID: loserID,
-                comparedAt: .now
+                comparedAt: Date()
             )
         )
         if isSyncConfigured {
@@ -253,12 +253,12 @@ final class AppStore {
 
     var myWishlist: [WishlistItem] {
         wishlist
-            .filter { $0.userID == currentUserID }
-            .sorted { $0.createdAt > $1.createdAt }
+            .filter { (item: WishlistItem) in item.userID == currentUserID }
+            .sorted { (lhs: WishlistItem, rhs: WishlistItem) in lhs.createdAt > rhs.createdAt }
     }
 
     func isOnWishlist(shopID: UUID) -> Bool {
-        wishlist.contains { $0.userID == currentUserID && $0.shopID == shopID }
+        return wishlist.contains { (item: WishlistItem) in item.userID == currentUserID && item.shopID == shopID }
     }
 
     @discardableResult
@@ -269,7 +269,7 @@ final class AppStore {
             shopID: shopID,
             title: title.trimmingCharacters(in: .whitespaces),
             note: note.trimmingCharacters(in: .whitespaces),
-            createdAt: .now
+            createdAt: Date()
         )
         wishlist.append(item)
         if isSyncConfigured { pushWishlistItem(item) }
@@ -290,7 +290,7 @@ final class AppStore {
             winCounts[comp.winnerLogID, default: 0] += 1
         }
         return drinkLogs
-            .sorted { lhs, rhs in
+            .sorted { (lhs: DrinkLog, rhs: DrinkLog) in
                 let wl = winCounts[lhs.id] ?? 0
                 let wr = winCounts[rhs.id] ?? 0
                 return wl != wr ? wl > wr : lhs.eloScore > rhs.eloScore
@@ -313,7 +313,7 @@ final class AppStore {
         drinkLogs[idx].eloScore = score
         for r in results where !comparisons.contains(where: { $0.matches(r.winner, r.loser) }) {
             comparisons.append(
-                Comparison(id: UUID(), userID: currentUserID, winnerLogID: r.winner, loserLogID: r.loser, comparedAt: .now)
+                Comparison(id: UUID(), userID: currentUserID, winnerLogID: r.winner, loserLogID: r.loser, comparedAt: Date())
             )
         }
         if isSyncConfigured { pushUpdateLog(drinkLogs[idx]) }
@@ -342,7 +342,7 @@ final class AppStore {
         var events: [ActivityEvent] = []
 
         for f in pendingInboundRequests {
-            events.append(ActivityEvent(kind: .friendRequest(f), date: .now))
+            events.append(ActivityEvent(kind: .friendRequest(f), date: Date()))
         }
 
         for req in chatRequests where req.addresseeID == currentUserID && req.status == .pending {
@@ -362,7 +362,52 @@ final class AppStore {
             }
         }
 
-        return events.sorted { $0.date > $1.date }
+        return events.sorted { (a: ActivityEvent, b: ActivityEvent) in a.date > b.date }
+    }
+
+    // MARK: - People Search (Friends)
+
+    /// Search users by username or display name. In sync mode, this may call the backend.
+    func searchUsers(matching query: String) async -> [BrewUser] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return [] }
+
+        // If sync is configured, attempt a remote search via Supabase; otherwise fall back to local.
+        if isSyncConfigured {
+            if let remote = await remoteSearchUsers(matching: trimmed) {
+                return remote
+            }
+        }
+        // Local fallback: filter the in-memory users array (excluding current user).
+        let lower = trimmed.lowercased()
+        return users
+            .filter { $0.id != currentUserID }
+            .filter { user in
+                user.displayName.lowercased().contains(lower) ||
+                user.username.lowercased().contains(lower)
+            }
+    }
+
+    /// Upserts a user into the local cache (used when remote search returns unknown users).
+    func upsertLocalUser(_ user: BrewUser) {
+        if let idx = users.firstIndex(where: { $0.id == user.id }) {
+            users[idx] = user
+        } else {
+            users.append(user)
+        }
+    }
+
+    /// Attempt a remote user search when sync is configured. Returns nil if not available.
+    private func remoteSearchUsers(matching query: String) async -> [BrewUser]? {
+        // If there's no Supabase service, bail out.
+        guard let supabase, let accessToken else { return nil }
+        do {
+            let results = try await supabase.searchUsers(accessToken: accessToken, query: query)
+            return results
+        } catch {
+            // Swallow errors and let the caller fall back to local search.
+            return nil
+        }
     }
 
     // refreshFeed() and remote-write helpers live in AppStore+Sync.swift
@@ -383,3 +428,4 @@ final class AppStore {
         if isSyncConfigured { pushChatStatus(id: id, status: status) }
     }
 }
+

@@ -4,6 +4,9 @@ import Foundation
 // All remote writes are fire-and-forget with optimistic local updates already
 // applied by the caller. refreshFeed() is the single source of truth on pull.
 // When the store is not sync-configured (demo mode) every method here no-ops.
+// Writes that fail purely due to connectivity (no server/auth error) are
+// persisted to WriteQueue and replayed automatically on the next successful
+// network round trip — see runRemote / refreshFeed.
 extension AppStore {
 
     // MARK: - Configuration
@@ -49,6 +52,10 @@ extension AppStore {
     func refreshFeed(attemptRefresh: Bool) async {
         guard let supabase, let token = accessToken, let uid = authUserID else { return }
         await MainActor.run { self.isSyncing = true; self.syncError = nil }
+
+        // Any writes queued while offline get a chance to flush before we pull,
+        // so the fetch below reflects them.
+        await WriteQueue.shared.drain(supabase: supabase, accessToken: token)
 
         do {
             let remoteFriendships = try await supabase.fetchFriendships(userID: uid, accessToken: token)
@@ -112,24 +119,20 @@ extension AppStore {
                 return
             }
             await MainActor.run {
-                self.syncError = Self.describe(error)
+                self.syncError = Self.isOffline(error) ? "Offline — changes will sync automatically" : Self.describe(error)
                 self.isSyncing = false
             }
         }
     }
 
-    @MainActor
-    func upsertLocalUser(_ user: BrewUser) {
-        if let idx = users.firstIndex(where: { $0.id == user.id }) {
-            users[idx] = user
-        } else {
-            users.append(user)
-        }
-    }
+    // upsertLocalUser lives in AppStore.swift.
 
-    // MARK: - Push helpers (fire-and-forget)
+    // MARK: - Push helpers (fire-and-forget, queued while offline)
 
-    private func runRemote(_ op: @escaping (SupabaseService, String) async throws -> Void) {
+    private func runRemote(
+        retryable: PendingWrite? = nil,
+        _ op: @escaping (SupabaseService, String) async throws -> Void
+    ) {
         guard let supabase, let token = accessToken else { return }
         Task {
             do {
@@ -138,8 +141,12 @@ extension AppStore {
                 // On an expired token, refresh once and retry.
                 if Self.isUnauthorized(error), let newToken = await self.tokenRefresher?() {
                     await MainActor.run { self.accessToken = newToken }
-                    do { try await op(supabase, newToken) }
-                    catch { await MainActor.run { self.syncError = Self.describe(error) } }
+                    do { try await op(supabase, newToken); return }
+                    catch { /* fall through — treat as a fresh failure below */ }
+                }
+                if Self.isOffline(error), let retryable {
+                    await WriteQueue.shared.enqueue(retryable)
+                    await MainActor.run { self.syncError = "Offline — changes will sync automatically" }
                 } else {
                     await MainActor.run { self.syncError = Self.describe(error) }
                 }
@@ -148,20 +155,25 @@ extension AppStore {
     }
 
     func pushInsertLog(_ log: DrinkLog) {
-        runRemote { try await $0.insertDrinkLog(RemoteDrinkLog(log), accessToken: $1) }
+        let remote = RemoteDrinkLog(log)
+        runRemote(retryable: .insertLog(remote)) { try await $0.insertDrinkLog(remote, accessToken: $1) }
     }
 
     func pushUpdateLog(_ log: DrinkLog) {
-        runRemote { try await $0.updateDrinkLog(RemoteDrinkLog(log), accessToken: $1) }
+        let remote = RemoteDrinkLog(log)
+        runRemote(retryable: .updateLog(remote)) { try await $0.updateDrinkLog(remote, accessToken: $1) }
     }
 
     func pushDeleteLog(id: UUID) {
-        runRemote { try await $0.deleteDrinkLog(id: id, accessToken: $1) }
+        runRemote(retryable: .deleteLog(id: id.uuidString)) { try await $0.deleteDrinkLog(id: id, accessToken: $1) }
     }
 
     func pushLike(logID: UUID, liked: Bool) {
         guard let uid = authUserID else { return }
-        runRemote { svc, token in
+        let retry: PendingWrite = liked
+            ? .like(logID: logID.uuidString, userID: uid.uuidString)
+            : .unlike(logID: logID.uuidString, userID: uid.uuidString)
+        runRemote(retryable: retry) { svc, token in
             if liked {
                 try await svc.insertLike(logID: logID, userID: uid, accessToken: token)
             } else {
@@ -171,40 +183,37 @@ extension AppStore {
     }
 
     func pushFriendship(_ f: Friendship) {
-        runRemote { try await $0.insertFriendship(RemoteFriendship(f), accessToken: $1) }
+        let remote = RemoteFriendship(f)
+        runRemote(retryable: .insertFriendship(remote)) { try await $0.insertFriendship(remote, accessToken: $1) }
     }
 
     func pushFriendshipStatus(id: UUID, status: Friendship.Status) {
-        runRemote { try await $0.updateFriendshipStatus(id: id, status: status.rawValue, accessToken: $1) }
+        runRemote(retryable: .friendshipStatus(id: id.uuidString, status: status.rawValue)) {
+            try await $0.updateFriendshipStatus(id: id, status: status.rawValue, accessToken: $1)
+        }
     }
 
     func pushChatRequest(_ r: CoffeeChatRequest) {
-        runRemote { try await $0.insertChatRequest(RemoteChatRequest(r), accessToken: $1) }
+        let remote = RemoteChatRequest(r)
+        runRemote(retryable: .insertChatRequest(remote)) { try await $0.insertChatRequest(remote, accessToken: $1) }
     }
 
     func pushChatStatus(id: UUID, status: CoffeeChatRequest.Status) {
-        runRemote { try await $0.updateChatRequestStatus(id: id, status: status.rawValue, accessToken: $1) }
+        runRemote(retryable: .chatStatus(id: id.uuidString, status: status.rawValue)) {
+            try await $0.updateChatRequestStatus(id: id, status: status.rawValue, accessToken: $1)
+        }
     }
 
     func pushWishlistItem(_ item: WishlistItem) {
-        runRemote { try await $0.insertWishlistItem(RemoteWishlistItem(item), accessToken: $1) }
+        let remote = RemoteWishlistItem(item)
+        runRemote(retryable: .insertWishlistItem(remote)) { try await $0.insertWishlistItem(remote, accessToken: $1) }
     }
 
     func pushDeleteWishlistItem(id: UUID) {
-        runRemote { try await $0.deleteWishlistItem(id: id, accessToken: $1) }
+        runRemote(retryable: .deleteWishlistItem(id: id.uuidString)) { try await $0.deleteWishlistItem(id: id, accessToken: $1) }
     }
 
-    // MARK: - Friend search
-
-    func searchUsers(matching query: String) async -> [BrewUser] {
-        guard let supabase, let token = accessToken, let uid = authUserID else { return [] }
-        do {
-            let profiles = try await supabase.searchProfiles(query: query, accessToken: token)
-            return profiles.compactMap { $0.toBrewUser() }.filter { $0.id != uid }
-        } catch {
-            return []
-        }
-    }
+    // searchUsers(matching:) lives in AppStore.swift.
 
     // MARK: - Username
 
@@ -214,7 +223,9 @@ extension AppStore {
             users[idx].username = username
             users[idx].displayName = displayName
         }
-        runRemote { try await $0.updateUsername(userID: uid, username: username, displayName: displayName, accessToken: $1) }
+        runRemote(retryable: .updateUsername(userID: uid.uuidString, username: username, displayName: displayName)) {
+            try await $0.updateUsername(userID: uid, username: username, displayName: displayName, accessToken: $1)
+        }
     }
 
     // MARK: - Helpers
@@ -228,5 +239,16 @@ extension AppStore {
             return code == 401 || code == 403
         }
         return false
+    }
+
+    static func isOffline(_ error: Error) -> Bool {
+        guard let urlError = error as? URLError else { return false }
+        switch urlError.code {
+        case .notConnectedToInternet, .networkConnectionLost, .timedOut,
+             .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed, .dataNotAllowed:
+            return true
+        default:
+            return false
+        }
     }
 }

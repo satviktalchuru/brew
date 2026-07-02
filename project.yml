@@ -28,10 +28,7 @@ targets:
           - CFBundleURLSchemes:
               - brew
             CFBundleURLName: com.satviktalchuru.brew
-        UILaunchScreen:
-          UIColorName: LaunchBackground
-          UIImageName: LaunchLogo
-          UIImageRespectsSafeAreaInsets: true
+        UILaunchStoryboardName: LaunchScreen
   BrewAppTests:
     type: bundle.unit-test
     platform: iOS

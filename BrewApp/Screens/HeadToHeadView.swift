@@ -7,7 +7,6 @@ struct HeadToHeadView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var currentIndex = 0
-    @State private var selectedID: UUID?
     @State private var comparisonsCompleted = 0
     @State private var preSessionSnapshot: [UUID: (rank: Int, score: Double)] = [:]
 
@@ -31,7 +30,7 @@ struct HeadToHeadView: View {
                             .foregroundStyle(BrewTheme.Color.textPrimary)
                             .multilineTextAlignment(.center)
 
-                        Text("Tap a card to select, then confirm.")
+                        Text("Tap a card to pick your favorite.")
                             .font(BrewTheme.Font.footnote)
                             .foregroundStyle(BrewTheme.Color.textSecondary)
                     }
@@ -43,8 +42,8 @@ struct HeadToHeadView: View {
                         ComparisonCard(
                             log: left,
                             shop: left.shopID.flatMap { store.shop(id: $0) },
-                            isSelected: selectedID == left.id
-                        ) { selectedID = left.id }
+                            isSelected: false
+                        ) { pick(winner: left.id, loser: right.id) }
                         .padding(.leading, BrewTheme.Spacing.sm)
 
                         VStack {
@@ -59,8 +58,8 @@ struct HeadToHeadView: View {
                         ComparisonCard(
                             log: right,
                             shop: right.shopID.flatMap { store.shop(id: $0) },
-                            isSelected: selectedID == right.id
-                        ) { selectedID = right.id }
+                            isSelected: false
+                        ) { pick(winner: right.id, loser: left.id) }
                         .padding(.trailing, BrewTheme.Spacing.sm)
                     }
                     .frame(maxWidth: .infinity)
@@ -68,21 +67,22 @@ struct HeadToHeadView: View {
                     Spacer()
 
                     VStack(spacing: BrewTheme.Spacing.xs) {
-                        BrewPrimaryButton(
-                            "Pick This One",
-                            isDisabled: selectedID == nil
-                        ) {
-                            guard let winner = selectedID else { return }
-                            let loser = (left.id == winner) ? right.id : left.id
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                            store.recordComparison(winnerID: winner, loserID: loser)
-                            comparisonsCompleted += 1
-                            advance()
+                        Button {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            if Bool.random() {
+                                pick(winner: left.id, loser: right.id)
+                            } else {
+                                pick(winner: right.id, loser: left.id)
+                            }
+                        } label: {
+                            Label("Too hard to decide", systemImage: "shuffle")
+                                .font(BrewTheme.Font.callout)
+                                .foregroundStyle(BrewTheme.Color.textSecondary)
                         }
 
                         Button("Skip") { advance() }
-                            .font(BrewTheme.Font.callout)
-                            .foregroundStyle(BrewTheme.Color.textSecondary)
+                            .font(BrewTheme.Font.caption)
+                            .foregroundStyle(BrewTheme.Color.textTertiary)
                     }
                     .padding(.horizontal, BrewTheme.Spacing.sm)
                     .padding(.bottom, BrewTheme.Spacing.lg)
@@ -208,8 +208,14 @@ struct HeadToHeadView: View {
 
     // MARK: - Helpers
 
+    private func pick(winner: UUID, loser: UUID) {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        store.recordComparison(winnerID: winner, loserID: loser)
+        comparisonsCompleted += 1
+        advance()
+    }
+
     private func advance() {
-        selectedID = nil
         currentIndex += 1
     }
 

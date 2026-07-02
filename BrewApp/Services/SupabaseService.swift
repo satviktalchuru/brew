@@ -83,6 +83,23 @@ final class SupabaseService {
         return try await get(url: url, accessToken: accessToken)
     }
 
+    // Convenience: search and map to BrewUser domain model
+    func searchUsers(accessToken: String, query: String) async throws -> [BrewUser] {
+        let remote = try await searchProfiles(query: query, accessToken: accessToken)
+        return remote.compactMap { ru in
+            guard let id = UUID(uuidString: ru.id) else { return nil }
+            return BrewUser(
+                id: id,
+                username: ru.username,
+                displayName: ru.displayName,
+                initials: String(ru.displayName.split(separator: " ").compactMap { $0.first }).prefix(2).uppercased(),
+                isCurrentUser: false,
+                isPublic: ru.isPublic,
+                appearInChats: ru.appearInChats
+            )
+        }
+    }
+
     func updateUsername(userID: UUID, username: String, displayName: String, accessToken: String) async throws {
         let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/profiles?id=eq.\(userID)")!
         var req = baseRequest(url: url, method: "PATCH", accessToken: accessToken)
