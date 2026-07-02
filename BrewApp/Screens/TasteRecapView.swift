@@ -63,16 +63,16 @@ struct TasteRecapView: View {
                             DragGesture(minimumDistance: 24)
                                 .onEnded { value in
                                     if value.translation.width < -40 {
-                                        // swipe left -> back
-                                        if cardIndex > 0 {
-                                            withAnimation { cardIndex -= 1 }
-                                        }
-                                    } else if value.translation.width > 40 {
-                                        // swipe right -> next (or finish on the last card)
+                                        // swipe right-to-left -> next (or finish on the last card)
                                         if cardIndex < cards.count - 1 {
                                             withAnimation { cardIndex += 1 }
                                         } else {
                                             dismiss()
+                                        }
+                                    } else if value.translation.width > 40 {
+                                        // swipe left-to-right -> back
+                                        if cardIndex > 0 {
+                                            withAnimation { cardIndex -= 1 }
                                         }
                                     }
                                 }
@@ -90,7 +90,7 @@ struct TasteRecapView: View {
                     }
                     .padding(.bottom, BrewTheme.Spacing.sm)
 
-                    Text(cardIndex < cards.count - 1 ? "Swipe to continue" : "Swipe right to finish")
+                    Text(cardIndex < cards.count - 1 ? "Swipe to continue" : "Swipe to finish")
                         .font(BrewTheme.Font.caption)
                         .foregroundStyle(.white.opacity(0.4))
                         .padding(.bottom, BrewTheme.Spacing.lg)

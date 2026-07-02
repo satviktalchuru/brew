@@ -27,7 +27,7 @@ final class PlacesService {
 
         do {
             let response = try await MKLocalSearch(request: request).start()
-            let shops = response.mapItems.compactMap(Self.makeShop)
+            let shops = response.mapItems.compactMap { Self.makeShop(from: $0, userCoordinate: coordinate) }
             return Self.deduplicated(shops)
         } catch {
             return []
@@ -64,7 +64,7 @@ final class PlacesService {
         return na == nb || na.contains(nb) || nb.contains(na)
     }
 
-    static func makeShop(from item: MKMapItem) -> Shop? {
+    static func makeShop(from item: MKMapItem, userCoordinate: CLLocationCoordinate2D? = nil) -> Shop? {
         guard let name = item.name else { return nil }
         let coord = item.placemark.coordinate
         let address = [item.placemark.thoroughfare, item.placemark.locality]
@@ -75,11 +75,23 @@ final class PlacesService {
             name: name,
             address: address.isEmpty ? (item.placemark.title ?? "") : address,
             hours: "",
-            distance: "",
+            distance: formattedDistance(from: userCoordinate, to: coord) ?? "",
             heroSymbol: "cup.and.saucer.fill",
             latitude: coord.latitude,
             longitude: coord.longitude
         )
+    }
+
+    // Bakes the distance in at search time so it always renders, rather than
+    // depending on AppStore.locationService still having a live coordinate
+    // whenever this row happens to be displayed.
+    private static func formattedDistance(from userCoordinate: CLLocationCoordinate2D?, to shopCoordinate: CLLocationCoordinate2D) -> String? {
+        guard let userCoordinate else { return nil }
+        let from = CLLocation(latitude: userCoordinate.latitude, longitude: userCoordinate.longitude)
+        let to = CLLocation(latitude: shopCoordinate.latitude, longitude: shopCoordinate.longitude)
+        let miles = from.distance(from: to) / 1609.34
+        if miles < 0.05 { return "< 0.1 mi" }
+        return String(format: "%.1f mi", miles)
     }
 
     // The same real-world place (by name + coordinate rounded to ~11m) always
