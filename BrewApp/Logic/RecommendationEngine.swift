@@ -105,6 +105,7 @@ private extension Roast {
         case .light:  return 0
         case .medium: return 1
         case .dark:   return 2
+        case .unknown: return 1 // treat unknown as medium-adjacent
         }
     }
 }

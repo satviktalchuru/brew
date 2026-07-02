@@ -35,6 +35,7 @@
 		D648BEAC2B8A7A9702C9192A /* TasteQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1FA59D8BDA2DE0F974793B1 /* TasteQuizView.swift */; };
 		D89BFBF228737C7A0BECA6D0 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1D748D9B25E10B361206A36 /* OnboardingView.swift */; };
 		DBFF32F1722D22ED18BD6B9C /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A26C779D55A2997A402638E /* ProfileView.swift */; };
+		E0A0EA212FF5BA17001DC971 /* ActivityFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0A0EA202FF5BA17001DC971 /* ActivityFeedView.swift */; };
 		E6375151CCD49C66757F6B2F /* FriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 198DCC46AF321172057BFA05 /* FriendsView.swift */; };
 		EC7AD5D21770F964C361D86B /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC38DA5BE3DDDD782CEE946B /* LogView.swift */; };
 		F1D234978E843B7672BCDC99 /* HeadToHeadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D27E0F289EEE84C77AB2C49A /* HeadToHeadView.swift */; };
@@ -65,9 +66,9 @@
 		3979B6368272F579443645ED /* BrewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewModels.swift; sourceTree = "<group>"; };
 		3A26C779D55A2997A402638E /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		3BAD5F123FE1E818332F8B51 /* BrewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewApp.swift; sourceTree = "<group>"; };
-		3E9D74D009E51623AC31D191 /* BrewAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BrewAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E9D74D009E51623AC31D191 /* BrewAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BrewAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		463A60A157BC99F533279C01 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
-		5D4B87664BA2CDAFEBD48211 /* BrewApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BrewApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5D4B87664BA2CDAFEBD48211 /* BrewApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BrewApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5EB4F6F56B7586F83B9B2A2C /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
 		7BAD20520A55B8B78984A732 /* TasteProfileEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteProfileEngine.swift; sourceTree = "<group>"; };
 		7C29546487072D2150C13BA7 /* DrinkDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrinkDetailView.swift; sourceTree = "<group>"; };
@@ -86,6 +87,7 @@
 		D27E0F289EEE84C77AB2C49A /* HeadToHeadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeadToHeadView.swift; sourceTree = "<group>"; };
 		D5058083F8EF9AC4BC19CCDD /* EloCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EloCalculator.swift; sourceTree = "<group>"; };
 		D698903508203A69322554C2 /* RankingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingEngine.swift; sourceTree = "<group>"; };
+		E0A0EA202FF5BA17001DC971 /* ActivityFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityFeedView.swift; sourceTree = "<group>"; };
 		E1D748D9B25E10B361206A36 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		FA05C9C739A1DE241F461122 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		FE9B634A8F56AB9C8D4BE697 /* MockData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockData.swift; sourceTree = "<group>"; };
@@ -150,6 +152,7 @@
 			isa = PBXGroup;
 			children = (
 				3979B6368272F579443645ED /* BrewModels.swift */,
+				E0A0EA202FF5BA17001DC971 /* ActivityFeedView.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -260,9 +263,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-				};
+				LastUpgradeCheck = 2660;
 			};
 			buildConfigurationList = 7AC1CA78F374620C8BF1B7BE /* Build configuration list for PBXProject "Brew" */;
 			developmentRegion = en;
@@ -313,6 +314,7 @@
 				B7190E977B7CBECDA00EE9B0 /* AuthService.swift in Sources */,
 				7EEBC01E0D61D323F26097D9 /* BrewApp.swift in Sources */,
 				BA8AEEB0FAEFE79FBC3C5874 /* BrewModels.swift in Sources */,
+				E0A0EA212FF5BA17001DC971 /* ActivityFeedView.swift in Sources */,
 				4A2324FE3A95748A0CCF8573 /* BrewTheme.swift in Sources */,
 				062825F83FFD597B9F5CFB86 /* Components.swift in Sources */,
 				36424E9F37EA05D1A1C79C57 /* DrinkDetailView.swift in Sources */,
@@ -390,6 +392,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -410,6 +413,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.9;
@@ -453,6 +457,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -466,6 +471,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.9;
@@ -477,6 +483,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 222CL4LN8X;
 				INFOPLIST_FILE = BrewApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -529,6 +536,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 222CL4LN8X;
 				INFOPLIST_FILE = BrewApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

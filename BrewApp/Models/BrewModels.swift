@@ -158,7 +158,7 @@ struct ActivityEvent: Identifiable {
     }
 }
 
-enum DeepLink {
+enum DeepLink: Equatable {
     case shop(UUID)
     case drink(UUID)
 

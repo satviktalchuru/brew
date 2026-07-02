@@ -8,10 +8,27 @@ struct SettingsView: View {
 
     @AppStorage("brew.isPublic") private var isPublic = true
     @AppStorage("brew.appearInChats") private var appearInChats = true
+    @AppStorage("brew.quizSweetness") private var savedSweetness: Int = 3
+    @AppStorage("brew.quizStrength") private var savedStrength: Int = 3
+    @AppStorage("brew.quizRoast") private var savedRoast: String = "medium"
 
     var body: some View {
         NavigationStack {
             List {
+                Section("Recommendations") {
+                    Stepper(value: $savedSweetness, in: 1...5) {
+                        LabeledContent("Sweetness", value: "\(savedSweetness)/5")
+                    }
+                    Stepper(value: $savedStrength, in: 1...5) {
+                        LabeledContent("Strength", value: "\(savedStrength)/5")
+                    }
+                    Picker("Roast", selection: $savedRoast) {
+                        Text("Light").tag("light")
+                        Text("Medium").tag("medium")
+                        Text("Dark").tag("dark")
+                    }
+                }
+
                 Section("Privacy") {
                     Toggle("Public Profile", isOn: $isPublic)
                     Toggle("Appear in Coffee Chats", isOn: $appearInChats)

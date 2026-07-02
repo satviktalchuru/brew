@@ -6,15 +6,15 @@ struct FlavorWheelView: View {
     var size: CGFloat = 240
 
     private let families: [(name: String, color: Color, subcategories: [String])] = [
-        ("Fruity",    Color(hex: "#E8734A"), ["Berry", "Dried Fruit", "Other Fruit", "Citrus"]),
-        ("Sour/Ferm", Color(hex: "#D4B44A"), ["Sour", "Fermented"]),
-        ("Green/Veg", Color(hex: "#7BAE5A"), ["Olive Oil", "Raw", "Vegetative", "Beany"]),
-        ("Other",     Color(hex: "#8E7BB5"), ["Papery", "Chemical"]),
-        ("Roasted",   Color(hex: "#5C3D2E"), ["Pipe Tobacco", "Tobacco", "Burnt", "Cereal"]),
-        ("Spices",    Color(hex: "#C47B3A"), ["Pungent", "Pepper", "Brown Spice"]),
-        ("Nutty/Coc", Color(hex: "#B8955A"), ["Nutty", "Cocoa"]),
-        ("Sweet",     Color(hex: "#E8A87C"), ["Brown Sugar", "Vanilla", "Vanillin", "Overall Sweet", "Sweet Aromatics"]),
-        ("Floral",    Color(hex: "#E88FAD"), ["Black Tea", "Floral"]),
+        ("Fruity",    Color(hexString: "#E8734A"), ["Berry", "Dried Fruit", "Other Fruit", "Citrus"]),
+        ("Sour/Ferm", Color(hexString: "#D4B44A"), ["Sour", "Fermented"]),
+        ("Green/Veg", Color(hexString: "#7BAE5A"), ["Olive Oil", "Raw", "Vegetative", "Beany"]),
+        ("Other",     Color(hexString: "#8E7BB5"), ["Papery", "Chemical"]),
+        ("Roasted",   Color(hexString: "#5C3D2E"), ["Pipe Tobacco", "Tobacco", "Burnt", "Cereal"]),
+        ("Spices",    Color(hexString: "#C47B3A"), ["Pungent", "Pepper", "Brown Spice"]),
+        ("Nutty/Coc", Color(hexString: "#B8955A"), ["Nutty", "Cocoa"]),
+        ("Sweet",     Color(hexString: "#E8A87C"), ["Brown Sugar", "Vanilla", "Vanillin", "Overall Sweet", "Sweet Aromatics"]),
+        ("Floral",    Color(hexString: "#E88FAD"), ["Black Tea", "Floral"]),
     ]
 
     private var activeSubcategories: Set<String> {
@@ -81,7 +81,13 @@ struct FlavorWheelLegend: View {
 
     private var uniqueFamilies: [String] {
         var seen = Set<String>()
-        return tags.compactMap { seen.insert($0.category).inserted ? $0.category : nil }
+        var result: [String] = []
+        for tag in tags {
+            if seen.insert(tag.category).inserted {
+                result.append(tag.category)
+            }
+        }
+        return result
     }
 
     var body: some View {
@@ -99,8 +105,8 @@ struct FlavorWheelLegend: View {
 }
 
 private extension Color {
-    init(hex: String) {
-        let h = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+    init(hexString: String) {
+        let h = hexString.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
         let n = UInt64(h, radix: 16) ?? 0
         let r = Double((n >> 16) & 0xFF) / 255
         let g = Double((n >> 8) & 0xFF) / 255

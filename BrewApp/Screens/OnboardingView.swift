@@ -109,14 +109,16 @@ struct OnboardingView: View {
                             .textContentType(.emailAddress)
                             .keyboardType(.emailAddress)
                             .autocapitalization(.none)
+                            .foregroundStyle(.black)
                             .padding(BrewTheme.Spacing.sm)
-                            .background(BrewTheme.Color.surface)
+                            .background(Color.white)
                             .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.small))
 
                         SecureField("Password", text: $password)
                             .textContentType(isSignUp ? .newPassword : .password)
+                            .foregroundStyle(.black)
                             .padding(BrewTheme.Spacing.sm)
-                            .background(BrewTheme.Color.surface)
+                            .background(Color.white)
                             .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.small))
                     }
 

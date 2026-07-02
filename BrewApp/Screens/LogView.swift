@@ -115,7 +115,10 @@ struct LogView: View {
     private var drinkSection: some View {
         Section {
             TextField("What did you order?", text: $drinkName)
-                .foregroundStyle(BrewTheme.Color.textPrimary)
+                .foregroundStyle(.black)
+                .padding(BrewTheme.Spacing.sm)
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.small))
 
             brewMethodPicker
             roastPicker
@@ -203,13 +206,16 @@ struct LogView: View {
             ZStack(alignment: .topLeading) {
                 if notes.isEmpty {
                     Text("Add a note...")
-                        .foregroundStyle(BrewTheme.Color.textTertiary)
+                        .foregroundStyle(Color.black.opacity(0.35))
                         .padding(.top, 8)
                         .allowsHitTesting(false)
                 }
                 TextEditor(text: $notes)
                     .frame(minHeight: 80)
-                    .foregroundStyle(BrewTheme.Color.textPrimary)
+                    .foregroundStyle(.black)
+                    .padding(8)
+                    .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.small))
             }
         } header: {
             Text("Notes (optional)")
