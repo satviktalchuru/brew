@@ -4,6 +4,10 @@ struct FriendProfileView: View {
     var store: AppStore
     var user: BrewUser
 
+    @Environment(\.dismiss) private var dismiss
+    @State private var showBlockConfirm = false
+    @State private var showReportSheet = false
+
     private var profile: TasteProfile { store.tasteProfile(for: user.id) }
 
     private var userLogs: [DrinkLog] {
@@ -35,6 +39,38 @@ struct FriendProfileView: View {
         .brewScreenBackground()
         .navigationDestination(for: DrinkLog.self) { log in
             DrinkDetailView(store: store, log: log)
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button {
+                        showReportSheet = true
+                    } label: {
+                        Label("Report", systemImage: "flag")
+                    }
+                    Button(role: .destructive) {
+                        showBlockConfirm = true
+                    } label: {
+                        Label("Block", systemImage: "hand.raised.fill")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
+        }
+        .alert("Block \(user.displayName)?", isPresented: $showBlockConfirm) {
+            Button("Cancel", role: .cancel) {}
+            Button("Block", role: .destructive) {
+                store.blockUser(user.id)
+                dismiss()
+            }
+        } message: {
+            Text("You won't see their posts or friend requests, and they won't be able to contact you.")
+        }
+        .sheet(isPresented: $showReportSheet) {
+            ReportSheet(store: store, reportedUserID: user.id, reportedLogID: nil) {
+                dismiss()
+            }
         }
     }
 

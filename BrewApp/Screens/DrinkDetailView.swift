@@ -14,6 +14,7 @@ struct DrinkDetailView: View {
 
     @State private var showEdit = false
     @State private var showRerank = false
+    @State private var showReport = false
 
     var body: some View {
         ScrollView {
@@ -36,10 +37,21 @@ struct DrinkDetailView: View {
                     Button("Edit") { showEdit = true }
                         .foregroundStyle(BrewTheme.Color.accent)
                 }
+            } else {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showReport = true
+                    } label: {
+                        Image(systemName: "flag")
+                    }
+                }
             }
         }
         .sheet(isPresented: $showEdit) {
             LogView(store: store, editingLog: log) { _ in }
+        }
+        .sheet(isPresented: $showReport) {
+            ReportSheet(store: store, reportedUserID: nil, reportedLogID: log.id) {}
         }
         .sheet(isPresented: $showRerank) {
             RankPlacementView(store: store, newLog: live) { _ in }

@@ -76,6 +76,25 @@ final class AuthService {
         defaults.set(false, forKey: "brew.isAuthenticated")
     }
 
+    // MARK: - Account Deletion (Apple Guideline 5.1.1(v))
+
+    // Permanently deletes the user's account and all associated data
+    // (cascades server-side), then signs out locally. Returns false if the
+    // request failed (e.g. offline) — the caller should tell the user to
+    // retry rather than silently proceeding as if it worked.
+    @discardableResult
+    func deleteAccount() async -> Bool {
+        guard let token = currentSession?.accessToken else { return false }
+        do {
+            try await supabase.deleteAccount(accessToken: token)
+            await MainActor.run { self.signOut() }
+            return true
+        } catch {
+            await MainActor.run { self.error = "Couldn't delete account: \(error.localizedDescription)" }
+            return false
+        }
+    }
+
     // MARK: - Dev helper — skip auth for simulator/demo builds
 
     func bypassForDemo() {

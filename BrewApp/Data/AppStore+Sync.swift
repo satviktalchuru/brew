@@ -58,10 +58,16 @@ extension AppStore {
         await WriteQueue.shared.drain(supabase: supabase, accessToken: token)
 
         do {
+            let blockedIDs = Set(
+                ((try? await supabase.fetchBlockedUsers(accessToken: token)) ?? [])
+                    .compactMap { UUID(uuidString: $0.blockedID) }
+            )
+
             let remoteFriendships = try await supabase.fetchFriendships(userID: uid, accessToken: token)
             let friendships = remoteFriendships
                 .compactMap { $0.toFriendship() }
                 .filter { $0.status == .pending || $0.status == .accepted }
+                .filter { !blockedIDs.contains($0.requesterID) && !blockedIDs.contains($0.addresseeID) }
 
             let acceptedFriendIDs = Set(
                 friendships
@@ -76,10 +82,11 @@ extension AppStore {
 
             var logsByID: [UUID: DrinkLog] = [:]
             for r in (remoteMine + remoteFriends) {
-                if let log = r.toDrinkLog() { logsByID[log.id] = log }
+                if let log = r.toDrinkLog(), !blockedIDs.contains(log.userID) { logsByID[log.id] = log }
             }
             let logs = logsByID.values.sorted { $0.loggedAt > $1.loggedAt }
             let chats = remoteChats.compactMap { $0.toChatRequest() }
+                .filter { !blockedIDs.contains($0.requesterID) && !blockedIDs.contains($0.addresseeID) }
 
             // Profiles for everyone referenced by logs / friendships / chats.
             let referencedIDs = Set(logs.map(\.userID))
@@ -116,7 +123,8 @@ extension AppStore {
                 self.drinkLogs = logs
                 self.friendships = friendships
                 self.chatRequests = chats
-                for u in fetchedUsers { self.upsertLocalUser(u) }
+                self.blockedUserIDs = blockedIDs
+                for u in fetchedUsers where !blockedIDs.contains(u.id) { self.upsertLocalUser(u) }
                 for s in fetchedShops where !self.shops.contains(where: { $0.id == s.id }) { self.shops.append(s) }
                 self.likeCounts = counts
                 self.likedLogIDs = mine
@@ -230,6 +238,41 @@ extension AppStore {
     }
 
     // searchUsers(matching:) lives in AppStore.swift.
+
+    // MARK: - Suggested Friends (sync mode)
+
+    // demo-mode local computation lives in AppStore.suggestedFriendsLocal.
+    func fetchSuggestedFriendsRemote(limit: Int = 10) async -> [(user: BrewUser, mutualCount: Int)] {
+        guard let supabase, let token = accessToken else { return [] }
+        do {
+            let remote = try await supabase.fetchSuggestedFriends(limit: limit, accessToken: token)
+            return remote.compactMap { $0.toSuggestion() }
+        } catch {
+            return []
+        }
+    }
+
+    // MARK: - Blocking & Reporting
+
+    func pushBlock(_ userID: UUID) {
+        guard let uid = authUserID else { return }
+        runRemote { try await $0.blockUser(blockerID: uid, blockedID: userID, accessToken: $1) }
+    }
+
+    func pushUnblock(_ userID: UUID) {
+        guard let uid = authUserID else { return }
+        runRemote { try await $0.unblockUser(blockerID: uid, blockedID: userID, accessToken: $1) }
+    }
+
+    func pushReport(reportedUserID: UUID?, reportedLogID: UUID?, reason: String) {
+        guard let uid = authUserID else { return }
+        runRemote {
+            try await $0.submitReport(
+                reporterID: uid, reportedUserID: reportedUserID, reportedLogID: reportedLogID,
+                reason: reason, accessToken: $1
+            )
+        }
+    }
 
     // MARK: - Username
 

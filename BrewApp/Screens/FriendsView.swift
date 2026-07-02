@@ -3,6 +3,7 @@ import SwiftUI
 struct FriendsView: View {
     var store: AppStore
     @State private var showAddFriends = false
+    @State private var suggestions: [(user: BrewUser, mutualCount: Int)] = []
 
     var body: some View {
         NavigationStack {
@@ -10,6 +11,7 @@ struct FriendsView: View {
                 friendRequestsSection
                 chatRequestsSection
                 upcomingChatsSection
+                suggestedFriendsSection
                 friendsSection
             }
             .listStyle(.insetGrouped)
@@ -28,6 +30,39 @@ struct FriendsView: View {
             }
             .sheet(isPresented: $showAddFriends) {
                 AddFriendsSheet(store: store)
+            }
+            .task { await loadSuggestions() }
+        }
+    }
+
+    private func loadSuggestions() async {
+        if store.isSyncConfigured {
+            suggestions = await store.fetchSuggestedFriendsRemote()
+        } else {
+            suggestions = store.suggestedFriendsLocal()
+        }
+    }
+
+    // MARK: - Suggested Friends
+
+    @ViewBuilder
+    private var suggestedFriendsSection: some View {
+        if !suggestions.isEmpty {
+            Section {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: BrewTheme.Spacing.sm) {
+                        ForEach(suggestions, id: \.user.id) { suggestion in
+                            SuggestedFriendCard(store: store, user: suggestion.user, mutualCount: suggestion.mutualCount) {
+                                suggestions.removeAll { $0.user.id == suggestion.user.id }
+                            }
+                        }
+                    }
+                    .padding(.vertical, BrewTheme.Spacing.xxs)
+                }
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+            } header: {
+                BrewSectionLabel("Suggested for You", subtitle: "People you may know", systemImage: "person.2.badge.plus")
             }
         }
     }
@@ -233,7 +268,7 @@ private struct AddFriendsSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     private var localResults: [BrewUser] {
-        let others = store.users.filter { $0.id != store.currentUserID }
+        let others = store.users.filter { $0.id != store.currentUserID && !store.isBlocked($0.id) }
         guard !query.isEmpty else { return others }
         return others.filter {
             $0.displayName.localizedCaseInsensitiveContains(query) ||
@@ -243,7 +278,8 @@ private struct AddFriendsSheet: View {
 
     private var results: [BrewUser] {
         // In sync mode, search the real profiles table; otherwise filter mock users.
-        store.isSyncConfigured ? remoteResults : localResults
+        let base = store.isSyncConfigured ? remoteResults : localResults
+        return base.filter { !store.isBlocked($0.id) }
     }
 
     var body: some View {
@@ -338,6 +374,60 @@ private struct AddFriendsSheet: View {
                 .padding(.vertical, 6)
                 .background(BrewTheme.Color.accent)
                 .clipShape(Capsule())
+        }
+    }
+}
+
+// MARK: - Suggested Friend Card
+
+private struct SuggestedFriendCard: View {
+    var store: AppStore
+    var user: BrewUser
+    var mutualCount: Int
+    var onAdded: () -> Void
+
+    @State private var requested = false
+
+    var body: some View {
+        VStack(spacing: BrewTheme.Spacing.xs) {
+            AvatarView(user: user, size: 52)
+
+            VStack(spacing: 1) {
+                Text(user.displayName)
+                    .font(BrewTheme.Font.captionSemibold)
+                    .foregroundStyle(BrewTheme.Color.textPrimary)
+                    .lineLimit(1)
+                if mutualCount > 0 {
+                    Text("\(mutualCount) mutual friend\(mutualCount == 1 ? "" : "s")")
+                        .font(.system(size: 10))
+                        .foregroundStyle(BrewTheme.Color.textTertiary)
+                        .lineLimit(1)
+                }
+            }
+
+            Button {
+                store.sendFriendRequest(to: user.id)
+                requested = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { onAdded() }
+            } label: {
+                Text(requested ? "Requested" : "Add")
+                    .font(BrewTheme.Font.captionSemibold)
+                    .foregroundStyle(requested ? BrewTheme.Color.textTertiary : .white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(requested ? BrewTheme.Color.border : BrewTheme.Color.accent)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .disabled(requested)
+        }
+        .frame(width: 96)
+        .padding(BrewTheme.Spacing.xs)
+        .background(BrewTheme.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.medium, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: BrewTheme.Radius.medium, style: .continuous)
+                .stroke(BrewTheme.Color.border.opacity(0.7), lineWidth: 1)
         }
     }
 }

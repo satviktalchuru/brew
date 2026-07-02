@@ -144,6 +144,25 @@ extension RemoteFriendship {
     }
 }
 
+// MARK: - RemoteSuggestedFriend -> (BrewUser, mutualCount)
+
+extension RemoteSuggestedFriend {
+    func toSuggestion() -> (user: BrewUser, mutualCount: Int)? {
+        guard let uuid = UUID(uuidString: id) else { return nil }
+        let initials = String(displayName.split(separator: " ").compactMap { $0.first }).prefix(2).uppercased()
+        let user = BrewUser(
+            id: uuid,
+            username: username,
+            displayName: displayName,
+            initials: initials.isEmpty ? "?" : initials,
+            isCurrentUser: false,
+            isPublic: isPublic,
+            appearInChats: appearInChats
+        )
+        return (user, mutualCount)
+    }
+}
+
 // MARK: - Shop <-> RemoteShop
 
 extension RemoteShop {

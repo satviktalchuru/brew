@@ -558,3 +558,71 @@ private struct FlowItem {
     var index: Int
     var size: CGSize
 }
+
+// MARK: - Report Sheet (Apple Guideline 1.2 — mechanism to report content)
+
+struct ReportSheet: View {
+    var store: AppStore
+    var reportedUserID: UUID?
+    var reportedLogID: UUID?
+    var onSubmitted: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var reason = ""
+    @State private var selectedPreset: String? = nil
+
+    private let presets = ["Spam", "Harassment or abuse", "Inappropriate content", "Fake account", "Other"]
+
+    private var canSubmit: Bool { !finalReason.trimmingCharacters(in: .whitespaces).isEmpty }
+    private var finalReason: String {
+        if let selectedPreset, selectedPreset != "Other" { return selectedPreset }
+        return reason
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("What's wrong?") {
+                    ForEach(presets, id: \.self) { preset in
+                        Button {
+                            selectedPreset = preset
+                        } label: {
+                            HStack {
+                                Text(preset).foregroundStyle(BrewTheme.Color.textPrimary)
+                                Spacer()
+                                if selectedPreset == preset {
+                                    Image(systemName: "checkmark").foregroundStyle(BrewTheme.Color.accent)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if selectedPreset == "Other" || selectedPreset == nil {
+                    Section("Details") {
+                        TextField("Describe the issue", text: $reason, axis: .vertical)
+                            .lineLimit(2...5)
+                            .foregroundStyle(.black)
+                    }
+                }
+            }
+            .navigationTitle("Report")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Submit") {
+                        let text = String(finalReason.prefix(500))
+                        if let reportedUserID { store.reportUser(reportedUserID, reason: text) }
+                        if let reportedLogID { store.reportLog(reportedLogID, reason: text) }
+                        dismiss()
+                        onSubmitted()
+                    }
+                    .disabled(!canSubmit)
+                }
+            }
+        }
+    }
+}

@@ -16,6 +16,7 @@ final class AppStore {
     var wishlist: [WishlistItem] = []
     var pendingComparisonPairs: [(DrinkLog, DrinkLog)] = []
     var avatarImages: [UUID: Data] = [:]
+    var blockedUserIDs: Set<UUID> = []
 
     var notificationService: NotificationService?
     var locationService: LocationService?
@@ -259,6 +260,72 @@ final class AppStore {
 
     var pendingInboundRequests: [Friendship] {
         friendships.filter { $0.addresseeID == currentUserID && $0.status == .pending }
+    }
+
+    // MARK: - Blocking & Reporting (Apple Guideline 1.2)
+
+    func isBlocked(_ userID: UUID) -> Bool {
+        blockedUserIDs.contains(userID)
+    }
+
+    func blockUser(_ userID: UUID) {
+        guard userID != currentUserID else { return }
+        blockedUserIDs.insert(userID)
+        // A block also severs any existing friendship/chat connection immediately.
+        friendships.removeAll {
+            ($0.requesterID == currentUserID && $0.addresseeID == userID) ||
+            ($0.requesterID == userID && $0.addresseeID == currentUserID)
+        }
+        drinkLogs.removeAll { $0.userID == userID }
+        chatRequests.removeAll { $0.requesterID == userID || $0.addresseeID == userID }
+        if isSyncConfigured { pushBlock(userID) }
+    }
+
+    func unblockUser(_ userID: UUID) {
+        blockedUserIDs.remove(userID)
+        if isSyncConfigured { pushUnblock(userID) }
+    }
+
+    func reportUser(_ userID: UUID, reason: String) {
+        if isSyncConfigured { pushReport(reportedUserID: userID, reportedLogID: nil, reason: reason) }
+    }
+
+    func reportLog(_ logID: UUID, reason: String) {
+        if isSyncConfigured { pushReport(reportedUserID: nil, reportedLogID: logID, reason: reason) }
+    }
+
+    // MARK: - Suggested Friends (friends-of-friends)
+
+    // In sync mode this needs a privileged server-side computation (RLS
+    // only lets a user see their own friendship rows, not their friends'
+    // other friendships) — see AppStore+Sync.fetchSuggestedFriendsRemote.
+    // In demo mode the full mock friendship graph is already local, so it's
+    // computed directly here.
+    func suggestedFriendsLocal(limit: Int = 10) -> [(user: BrewUser, mutualCount: Int)] {
+        let myFriendIDs = Set(
+            friendships.filter { $0.status == .accepted }
+                .flatMap { [$0.requesterID, $0.addresseeID] }
+        ).subtracting([currentUserID])
+
+        let excluded = myFriendIDs.union([currentUserID]).union(blockedUserIDs).union(
+            friendships.filter { $0.status == .pending }.flatMap { [$0.requesterID, $0.addresseeID] }
+        )
+
+        var mutualCounts: [UUID: Int] = [:]
+        for friendID in myFriendIDs {
+            let theirFriends = friendships
+                .filter { $0.status == .accepted && ($0.requesterID == friendID || $0.addresseeID == friendID) }
+                .flatMap { [$0.requesterID, $0.addresseeID] }
+                .filter { $0 != friendID }
+            for candidate in theirFriends where !excluded.contains(candidate) {
+                mutualCounts[candidate, default: 0] += 1
+            }
+        }
+
+        return mutualCounts
+            .sorted { $0.value > $1.value }
+            .prefix(limit)
+            .compactMap { id, count in user(id: id).map { (user: $0, mutualCount: count) } }
     }
 
     // MARK: - Wishlist (Want to Try)

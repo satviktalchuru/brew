@@ -346,6 +346,21 @@ enum MockData {
                 requesterID: priyaID,
                 addresseeID: satvikID,
                 status: .pending
+            ),
+            // Lina isn't connected to satvik yet, but is friends with two of
+            // satvik's friends — gives the "Suggested for You" feature real
+            // friends-of-friends data to demonstrate in demo mode.
+            Friendship(
+                id: UUID(uuidString: "40000000-0000-0000-0000-000000000005")!,
+                requesterID: mayaID,
+                addresseeID: linaID,
+                status: .accepted
+            ),
+            Friendship(
+                id: UUID(uuidString: "40000000-0000-0000-0000-000000000006")!,
+                requesterID: marcusID,
+                addresseeID: linaID,
+                status: .accepted
             )
         ]
 

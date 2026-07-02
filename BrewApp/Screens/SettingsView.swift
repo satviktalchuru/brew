@@ -12,6 +12,15 @@ struct SettingsView: View {
     @AppStorage("brew.quizStrength") private var savedStrength: Int = 3
     @AppStorage("brew.quizRoast") private var savedRoast: String = "medium"
 
+    @State private var showDeleteConfirm = false
+    @State private var isDeletingAccount = false
+    @State private var showBlockedUsers = false
+
+    // Apple Guideline 1.2 requires published developer contact info for
+    // reporting concerns. Replace with your real support address/URL.
+    private let supportEmail = "support@brewapp.example"
+    private let privacyPolicyURL = URL(string: "https://brewapp.example/privacy")!
+
     var body: some View {
         NavigationStack {
             List {
@@ -32,6 +41,12 @@ struct SettingsView: View {
                 Section("Privacy") {
                     Toggle("Public Profile", isOn: $isPublic)
                     Toggle("Appear in Coffee Chats", isOn: $appearInChats)
+                    Button {
+                        showBlockedUsers = true
+                    } label: {
+                        LabeledContent("Blocked Users", value: store.blockedUserIDs.isEmpty ? "" : "\(store.blockedUserIDs.count)")
+                    }
+                    .foregroundStyle(BrewTheme.Color.textPrimary)
                 }
 
                 Section("Account") {
@@ -46,6 +61,31 @@ struct SettingsView: View {
                         dismiss()
                     } label: {
                         Label("Sign Out", systemImage: "arrow.right.square")
+                    }
+
+                    if authService.currentSession != nil {
+                        Button(role: .destructive) {
+                            showDeleteConfirm = true
+                        } label: {
+                            if isDeletingAccount {
+                                HStack {
+                                    ProgressView().controlSize(.small)
+                                    Text("Deleting…")
+                                }
+                            } else {
+                                Label("Delete Account", systemImage: "trash")
+                            }
+                        }
+                        .disabled(isDeletingAccount)
+                    }
+                }
+
+                Section("Support") {
+                    Link(destination: URL(string: "mailto:\(supportEmail)")!) {
+                        Label("Contact Support", systemImage: "envelope")
+                    }
+                    Link(destination: privacyPolicyURL) {
+                        Label("Privacy Policy", systemImage: "hand.raised")
                     }
                 }
 
@@ -79,6 +119,22 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
+            .alert("Delete your account?", isPresented: $showDeleteConfirm) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete Permanently", role: .destructive) {
+                    Task {
+                        isDeletingAccount = true
+                        let success = await authService.deleteAccount()
+                        isDeletingAccount = false
+                        if success { dismiss() }
+                    }
+                }
+            } message: {
+                Text("This permanently deletes your account and all your drink logs, friends, and data. This can't be undone.")
+            }
+            .sheet(isPresented: $showBlockedUsers) {
+                BlockedUsersView(store: store)
+            }
         }
     }
 
@@ -89,5 +145,46 @@ struct SettingsView: View {
     private var backendStatus: String {
         let url = SupabaseConfig.projectURL
         return url.contains("YOUR_PROJECT") ? "Demo (not connected)" : "Supabase"
+    }
+}
+
+// MARK: - Blocked Users
+
+private struct BlockedUsersView: View {
+    var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+
+    private var blocked: [BrewUser] {
+        store.blockedUserIDs.compactMap { store.user(id: $0) }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if blocked.isEmpty {
+                    ContentUnavailableView("No blocked users", systemImage: "hand.raised.slash")
+                } else {
+                    List(blocked) { user in
+                        HStack {
+                            AvatarView(user: user, size: 36)
+                            Text(user.displayName)
+                                .foregroundStyle(BrewTheme.Color.textPrimary)
+                            Spacer()
+                            Button("Unblock") {
+                                store.unblockUser(user.id)
+                            }
+                            .font(BrewTheme.Font.captionSemibold)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Blocked Users")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
     }
 }

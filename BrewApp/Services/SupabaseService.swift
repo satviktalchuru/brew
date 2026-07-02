@@ -68,6 +68,18 @@ final class SupabaseService {
         _ = try await URLSession.shared.data(for: request)
     }
 
+    // Apple Guideline 5.1.1(v): apps that support account creation must also
+    // support in-app account deletion. Calls the delete_own_account() RPC
+    // (SECURITY DEFINER), which cascades through every table referencing
+    // the user and removes their auth.users row entirely.
+    func deleteAccount(accessToken: String) async throws {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/rpc/delete_own_account")!
+        var req = baseRequest(url: url, method: "POST", accessToken: accessToken)
+        req.httpBody = try JSONSerialization.data(withJSONObject: [String: String]())
+        let (data, response) = try await URLSession.shared.data(for: req)
+        try validate(response: response, data: data)
+    }
+
     // MARK: - Profiles
 
     func fetchProfile(userID: UUID, accessToken: String) async throws -> RemoteUser {
@@ -131,6 +143,52 @@ final class SupabaseService {
                 appearInChats: ru.appearInChats
             )
         }
+    }
+
+    // Friends-of-friends suggestions via the suggested_friends() RPC (RLS
+    // means the client can't otherwise see who its friends' other friends
+    // are, so this has to be computed server-side).
+    func fetchSuggestedFriends(limit: Int, accessToken: String) async throws -> [RemoteSuggestedFriend] {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/rpc/suggested_friends")!
+        var req = baseRequest(url: url, method: "POST", accessToken: accessToken)
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["limit_count": limit])
+        let (data, response) = try await URLSession.shared.data(for: req)
+        try validate(response: response, data: data)
+        return try JSONDecoder.supabase.decode([RemoteSuggestedFriend].self, from: data)
+    }
+
+    // MARK: - Blocking & Reporting (Apple Guideline 1.2)
+
+    func fetchBlockedUsers(accessToken: String) async throws -> [RemoteBlock] {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/blocked_users")!
+        return try await get(url: url, accessToken: accessToken)
+    }
+
+    func blockUser(blockerID: UUID, blockedID: UUID, accessToken: String) async throws {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/blocked_users")!
+        var req = baseRequest(url: url, method: "POST", accessToken: accessToken)
+        req.setValue("resolution=ignore-duplicates", forHTTPHeaderField: "Prefer")
+        req.httpBody = try JSONSerialization.data(withJSONObject: [
+            "id": UUID().uuidString, "blocker_id": blockerID.uuidString, "blocked_id": blockedID.uuidString
+        ])
+        _ = try await URLSession.shared.data(for: req)
+    }
+
+    func unblockUser(blockerID: UUID, blockedID: UUID, accessToken: String) async throws {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/blocked_users?blocker_id=eq.\(blockerID)&blocked_id=eq.\(blockedID)")!
+        let req = baseRequest(url: url, method: "DELETE", accessToken: accessToken)
+        _ = try await URLSession.shared.data(for: req)
+    }
+
+    func submitReport(reporterID: UUID, reportedUserID: UUID?, reportedLogID: UUID?, reason: String, accessToken: String) async throws {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/reports")!
+        var req = baseRequest(url: url, method: "POST", accessToken: accessToken)
+        var body: [String: Any] = ["id": UUID().uuidString, "reporter_id": reporterID.uuidString, "reason": reason]
+        if let reportedUserID { body["reported_user_id"] = reportedUserID.uuidString }
+        if let reportedLogID { body["reported_log_id"] = reportedLogID.uuidString }
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await URLSession.shared.data(for: req)
+        try validate(response: response, data: data)
     }
 
     func updateUsername(userID: UUID, username: String, displayName: String, accessToken: String) async throws {
@@ -450,6 +508,35 @@ struct RemoteLike: Codable {
         case id
         case logID = "log_id"
         case userID = "user_id"
+    }
+}
+
+struct RemoteSuggestedFriend: Codable {
+    var id: String
+    var username: String
+    var displayName: String
+    var isPublic: Bool
+    var appearInChats: Bool
+    var mutualCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id, username
+        case displayName = "display_name"
+        case isPublic = "is_public"
+        case appearInChats = "appear_in_chats"
+        case mutualCount = "mutual_count"
+    }
+}
+
+struct RemoteBlock: Codable {
+    var id: String
+    var blockerID: String
+    var blockedID: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case blockerID = "blocker_id"
+        case blockedID = "blocked_id"
     }
 }
 
