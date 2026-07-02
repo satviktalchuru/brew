@@ -44,14 +44,26 @@ struct OnboardingView: View {
                 Spacer()
 
                 VStack(spacing: BrewTheme.Spacing.sm) {
-                    SignInWithAppleButton(.signIn) { request in
-                        request.requestedScopes = [.fullName, .email]
-                    } onCompletion: { _ in
-                        authService.signInWithApple()
+                    Button {
+                        authService.signInWithGoogle()
+                    } label: {
+                        HStack(spacing: BrewTheme.Spacing.xs) {
+                            Image(systemName: "g.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(BrewTheme.Color.accent)
+                            Text("Continue with Google")
+                                .font(BrewTheme.Font.bodySemibold)
+                                .foregroundStyle(.black)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.medium))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: BrewTheme.Radius.medium)
+                                .stroke(BrewTheme.Color.border, lineWidth: 1)
+                        }
                     }
-                    .signInWithAppleButtonStyle(.black)
-                    .frame(height: 50)
-                    .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.medium))
 
                     Button {
                         page = .emailAuth

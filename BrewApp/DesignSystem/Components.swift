@@ -340,6 +340,68 @@ struct DrinkSummaryCard: View {
     }
 }
 
+// Generated "brand" thumbnail for a drink's shop: a gradient in the shop's
+// signature color with its logo mark and monogram. Stands in for real photos
+// until a photo source (e.g. Google Places) is wired in.
+struct CoffeeBrandTile: View {
+    var shop: Shop?
+    var log: DrinkLog
+    var height: CGFloat = 96
+
+    private var hue: Double { shop?.accentHue ?? 0.08 }
+    private var symbol: String {
+        shop?.heroSymbol ?? (log.isHomeBrew ? "house.fill" : "cup.and.saucer.fill")
+    }
+    private var monogram: String {
+        let source = shop?.name ?? log.drinkName
+        return source.first.map { String($0).uppercased() } ?? "?"
+    }
+
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(hue: hue, saturation: 0.6, brightness: 0.55),
+                    Color(hue: hue, saturation: 0.55, brightness: 0.3)
+                ],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            )
+
+            Image(systemName: symbol)
+                .font(.system(size: height * 0.42, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.92))
+                .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
+
+            VStack {
+                Spacer()
+                HStack(alignment: .bottom) {
+                    Text(monogram)
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .frame(width: 22, height: 22)
+                        .background(.white.opacity(0.22))
+                        .clipShape(Circle())
+                    Spacer()
+                    if log.isHomeBrew {
+                        Text("Home")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(.white.opacity(0.22))
+                            .clipShape(Capsule())
+                    }
+                }
+                .padding(8)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.small, style: .continuous))
+        .accessibilityHidden(true)
+    }
+}
+
 struct RankedDrinkRow: View {
     var rank: Int
     var log: DrinkLog

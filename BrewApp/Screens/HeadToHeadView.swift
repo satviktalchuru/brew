@@ -230,6 +230,8 @@ private struct ComparisonCard: View {
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: BrewTheme.Spacing.xs) {
+                CoffeeBrandTile(shop: shop, log: log, height: 88)
+
                 Text(log.drinkName)
                     .font(BrewTheme.Font.title3)
                     .foregroundStyle(BrewTheme.Color.textPrimary)

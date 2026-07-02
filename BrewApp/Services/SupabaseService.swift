@@ -108,6 +108,31 @@ final class SupabaseService {
         return try await post(url: url, body: ["refresh_token": refreshToken], requiresAuth: false)
     }
 
+    // MARK: - OAuth (Google, etc.)
+
+    // The URL to open in a web auth session. Supabase handles the provider
+    // handshake and redirects back to `redirectTo` with tokens in the fragment.
+    func oauthAuthorizeURL(provider: String, redirectTo: String) -> URL {
+        var comp = URLComponents(string: "\(SupabaseConfig.projectURL)/auth/v1/authorize")!
+        comp.queryItems = [
+            URLQueryItem(name: "provider", value: provider),
+            URLQueryItem(name: "redirect_to", value: redirectTo)
+        ]
+        return comp.url!
+    }
+
+    // OAuth callbacks return tokens but not the user id; look it up from the token.
+    func fetchUserID(accessToken: String) async throws -> String {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/user")!
+        var req = URLRequest(url: url)
+        req.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
+        req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        try validate(response: response, data: data)
+        struct UserResponse: Decodable { let id: String }
+        return try JSONDecoder().decode(UserResponse.self, from: data).id
+    }
+
     // MARK: - Drink Logs
 
     func fetchDrinkLogs(userID: UUID, accessToken: String) async throws -> [RemoteDrinkLog] {

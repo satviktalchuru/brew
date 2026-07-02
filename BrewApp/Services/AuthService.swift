@@ -1,5 +1,6 @@
 import Foundation
 import AuthenticationServices
+import UIKit
 
 @Observable
 final class AuthService: NSObject {
@@ -13,6 +14,10 @@ final class AuthService: NSObject {
 
     private let defaults = UserDefaults.standard
     private static let refreshTokenAccount = "supabase.refreshToken"
+
+    // OAuth redirect back into the app (must be registered in Supabase Auth → URL Configuration).
+    private static let oauthRedirect = "brew://login-callback"
+    private var webAuthSession: ASWebAuthenticationSession?
 
     override init() {
         self.isAuthenticated = defaults.bool(forKey: "brew.isAuthenticated")
@@ -28,6 +33,54 @@ final class AuthService: NSObject {
         let controller = ASAuthorizationController(authorizationRequests: [request])
         controller.delegate = self
         controller.performRequests()
+    }
+
+    // MARK: - Sign In With Google (OAuth via web session)
+
+    func signInWithGoogle() {
+        let url = supabase.oauthAuthorizeURL(provider: "google", redirectTo: Self.oauthRedirect)
+        let session = ASWebAuthenticationSession(url: url, callbackURLScheme: "brew") { [weak self] callbackURL, error in
+            guard let self else { return }
+            if let error {
+                // A user-initiated cancel isn't an error worth surfacing.
+                if (error as? ASWebAuthenticationSessionError)?.code != .canceledLogin {
+                    Task { @MainActor in self.error = error.localizedDescription }
+                }
+                return
+            }
+            guard let callbackURL else { return }
+            Task { await self.completeOAuth(callbackURL: callbackURL) }
+        }
+        session.presentationContextProvider = self
+        session.prefersEphemeralWebBrowserSession = false
+        webAuthSession = session
+        session.start()
+    }
+
+    private func completeOAuth(callbackURL: URL) async {
+        let fragment = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?.fragment ?? ""
+        var params: [String: String] = [:]
+        for pair in fragment.split(separator: "&") {
+            let kv = pair.split(separator: "=", maxSplits: 1).map(String.init)
+            if kv.count == 2 { params[kv[0]] = kv[1].removingPercentEncoding ?? kv[1] }
+        }
+
+        guard let access = params["access_token"], let refresh = params["refresh_token"] else {
+            await MainActor.run {
+                self.error = params["error_description"] ?? "Google sign-in was cancelled or failed."
+            }
+            return
+        }
+
+        do {
+            let uid = try await supabase.fetchUserID(accessToken: access)
+            let session = SupabaseSession(accessToken: access, refreshToken: refresh, user: .init(id: uid))
+            await MainActor.run { self.apply(session) }
+        } catch let e as SupabaseService.SupabaseError {
+            await MainActor.run { self.error = e.errorDescription }
+        } catch {
+            await MainActor.run { self.error = error.localizedDescription }
+        }
     }
 
     // MARK: - Email Auth
@@ -133,5 +186,16 @@ extension AuthService: ASAuthorizationControllerDelegate {
         didCompleteWithError error: Error
     ) {
         Task { @MainActor in self.error = error.localizedDescription }
+    }
+}
+
+// MARK: - ASWebAuthenticationPresentationContextProviding
+
+extension AuthService: ASWebAuthenticationPresentationContextProviding {
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow } ?? ASPresentationAnchor()
     }
 }
