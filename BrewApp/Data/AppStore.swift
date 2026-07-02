@@ -19,6 +19,18 @@ final class AppStore {
     var notificationService: NotificationService?
     var locationService: LocationService?
 
+    // MARK: - Supabase sync state
+    // When these are non-nil the store mirrors mutations to Supabase and
+    // refreshFeed() pulls real data. In demo mode they stay nil and the
+    // store runs entirely on seeded mock data.
+    var supabase: SupabaseService?
+    var accessToken: String?
+    var authUserID: UUID?
+    var isSyncing = false
+    var syncError: String?
+
+    var isSyncConfigured: Bool { supabase != nil && accessToken != nil && authUserID != nil }
+
     func formattedDistance(to shop: Shop) -> String {
         locationService?.formattedDistance(to: shop.coordinate) ?? shop.distance
     }
@@ -59,22 +71,28 @@ final class AppStore {
 
     func addDrinkLog(_ log: DrinkLog) {
         drinkLogs.append(log)
+        if isSyncConfigured { pushInsertLog(log) }
     }
 
     func deleteDrinkLog(id: UUID) {
         drinkLogs.removeAll { $0.id == id && $0.userID == currentUserID }
         comparisons.removeAll { $0.winnerLogID == id || $0.loserLogID == id }
+        if isSyncConfigured { pushDeleteLog(id: id) }
     }
 
     func toggleLike(logID: UUID) {
         guard drinkLogs.contains(where: { $0.id == logID }) else { return }
+        let nowLiked: Bool
         if likedLogIDs.contains(logID) {
             likedLogIDs.remove(logID)
             likeCounts[logID] = max((likeCounts[logID] ?? 1) - 1, 0)
+            nowLiked = false
         } else {
             likedLogIDs.insert(logID)
             likeCounts[logID] = (likeCounts[logID] ?? 0) + 1
+            nowLiked = true
         }
+        if isSyncConfigured { pushLike(logID: logID, liked: nowLiked) }
     }
 
     func likeCount(for logID: UUID) -> Int {
@@ -90,14 +108,16 @@ final class AppStore {
             $0.status == .pending
         }
         guard !alreadyExists else { return }
-        chatRequests.append(CoffeeChatRequest(
+        let request = CoffeeChatRequest(
             id: UUID(),
             requesterID: currentUserID,
             addresseeID: addresseeID,
             shopID: shopID,
             status: .pending,
             requestedAt: .now
-        ))
+        )
+        chatRequests.append(request)
+        if isSyncConfigured { pushChatRequest(request) }
         if let requester = user(id: currentUserID), let shop = shop(id: shopID) {
             notificationService?.scheduleChatRequestNotification(from: requester.displayName, shopName: shop.name)
         }
@@ -128,6 +148,10 @@ final class AppStore {
                 comparedAt: .now
             )
         )
+        if isSyncConfigured {
+            pushUpdateLog(drinkLogs[winnerIndex])
+            pushUpdateLog(drinkLogs[loserIndex])
+        }
     }
 
     func candidateComparisonPairs() -> [(DrinkLog, DrinkLog)] {
@@ -173,16 +197,22 @@ final class AppStore {
              ($0.requesterID == userID && $0.addresseeID == currentUserID))
         }
         guard !alreadyExists else { return }
-        friendships.append(Friendship(id: UUID(), requesterID: currentUserID, addresseeID: userID, status: .pending))
+        let friendship = Friendship(id: UUID(), requesterID: currentUserID, addresseeID: userID, status: .pending)
+        friendships.append(friendship)
+        if isSyncConfigured { pushFriendship(friendship) }
         if let requester = user(id: currentUserID) {
             notificationService?.scheduleFriendRequestNotification(from: requester.displayName)
         }
     }
 
     func cancelFriendRequest(to userID: UUID) {
+        let outgoing = friendships.first {
+            $0.requesterID == currentUserID && $0.addresseeID == userID && $0.status == .pending
+        }
         friendships.removeAll {
             $0.requesterID == currentUserID && $0.addresseeID == userID && $0.status == .pending
         }
+        if isSyncConfigured, let id = outgoing?.id { pushFriendshipStatus(id: id, status: .blocked) }
     }
 
     func acceptFriendRequest(from userID: UUID) {
@@ -190,12 +220,17 @@ final class AppStore {
             $0.requesterID == userID && $0.addresseeID == currentUserID && $0.status == .pending
         }) else { return }
         friendships[idx].status = .accepted
+        if isSyncConfigured { pushFriendshipStatus(id: friendships[idx].id, status: .accepted) }
     }
 
     func declineFriendRequest(from userID: UUID) {
+        let inbound = friendships.first {
+            $0.requesterID == userID && $0.addresseeID == currentUserID && $0.status == .pending
+        }
         friendships.removeAll {
             $0.requesterID == userID && $0.addresseeID == currentUserID && $0.status == .pending
         }
+        if isSyncConfigured, let id = inbound?.id { pushFriendshipStatus(id: id, status: .blocked) }
     }
 
     func friendshipStatus(with userID: UUID) -> Friendship.Status? {
@@ -230,6 +265,7 @@ final class AppStore {
     func updateDrinkLog(_ updated: DrinkLog) {
         guard let idx = drinkLogs.firstIndex(where: { $0.id == updated.id && $0.userID == currentUserID }) else { return }
         drinkLogs[idx] = updated
+        if isSyncConfigured { pushUpdateLog(updated) }
     }
 
     var logStreak: Int {
@@ -278,12 +314,7 @@ final class AppStore {
         return events.sorted { $0.date > $1.date }
     }
 
-    // MARK: - Supabase sync stub
-
-    func refreshFeed() async {
-        // TODO: replace with SupabaseService calls once credentials are set
-        // e.g. let logs = try await supabase.fetchDrinkLogs(userID: currentUserID, accessToken: token)
-    }
+    // refreshFeed() and remote-write helpers live in AppStore+Sync.swift
 
     func acceptChatRequest(_ id: UUID) {
         updateChatRequest(id, status: .accepted)
@@ -298,5 +329,6 @@ final class AppStore {
             return
         }
         chatRequests[index].status = status
+        if isSyncConfigured { pushChatStatus(id: id, status: status) }
     }
 }

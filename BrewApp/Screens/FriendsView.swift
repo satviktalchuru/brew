@@ -228,15 +228,22 @@ private struct UpcomingChatRow: View {
 private struct AddFriendsSheet: View {
     var store: AppStore
     @State private var query = ""
+    @State private var remoteResults: [BrewUser] = []
+    @State private var isSearching = false
     @Environment(\.dismiss) private var dismiss
 
-    private var results: [BrewUser] {
+    private var localResults: [BrewUser] {
         let others = store.users.filter { $0.id != store.currentUserID }
         guard !query.isEmpty else { return others }
         return others.filter {
             $0.displayName.localizedCaseInsensitiveContains(query) ||
             $0.username.localizedCaseInsensitiveContains(query)
         }
+    }
+
+    private var results: [BrewUser] {
+        // In sync mode, search the real profiles table; otherwise filter mock users.
+        store.isSyncConfigured ? remoteResults : localResults
     }
 
     var body: some View {
@@ -260,7 +267,10 @@ private struct AddFriendsSheet: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .background(BrewTheme.Color.background)
-            .searchable(text: $query, prompt: "Search by name or username")
+            .overlay { searchHint }
+            .searchable(text: $query, prompt: store.isSyncConfigured ? "Search by @username or name" : "Search by name or username")
+            .textInputAutocapitalization(.never)
+            .task(id: query) { await runRemoteSearch() }
             .navigationTitle("Add Friends")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -269,6 +279,39 @@ private struct AddFriendsSheet: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var searchHint: some View {
+        if store.isSyncConfigured {
+            if isSearching {
+                ProgressView()
+            } else if query.trimmingCharacters(in: .whitespaces).count < 2 {
+                ContentUnavailableView("Find friends", systemImage: "magnifyingglass",
+                                       description: Text("Search by username or name to add people on Brew."))
+            } else if remoteResults.isEmpty {
+                ContentUnavailableView.search(text: query)
+            }
+        }
+    }
+
+    @MainActor
+    private func runRemoteSearch() async {
+        guard store.isSyncConfigured else { return }
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        guard trimmed.count >= 2 else {
+            remoteResults = []
+            return
+        }
+        // Debounce rapid keystrokes.
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        if Task.isCancelled { return }
+        isSearching = true
+        let found = await store.searchUsers(matching: trimmed)
+        if Task.isCancelled { return }
+        for user in found { store.upsertLocalUser(user) }
+        remoteResults = found
+        isSearching = false
     }
 
     @ViewBuilder

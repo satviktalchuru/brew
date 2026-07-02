@@ -63,12 +63,49 @@ final class SupabaseService {
         return profile
     }
 
+    func fetchProfiles(ids: [UUID], accessToken: String) async throws -> [RemoteUser] {
+        guard !ids.isEmpty else { return [] }
+        let joined = ids.map { $0.uuidString }.joined(separator: ",")
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/profiles?id=in.(\(joined))")!
+        return try await get(url: url, accessToken: accessToken)
+    }
+
+    func searchProfiles(query: String, accessToken: String) async throws -> [RemoteUser] {
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        guard trimmed.count >= 2 else { return [] }
+        // Keep only characters safe for a PostgREST ilike filter (no commas/parens/wildcards from user input).
+        let safe = trimmed.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) || $0 == " " }
+        let cleaned = String(String.UnicodeScalarView(safe))
+        let encoded = cleaned.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? cleaned
+        guard !encoded.isEmpty else { return [] }
+        // case-insensitive partial match on username or display_name, public profiles only
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/profiles?or=(username.ilike.*\(encoded)*,display_name.ilike.*\(encoded)*)&is_public=eq.true&limit=25")!
+        return try await get(url: url, accessToken: accessToken)
+    }
+
+    func updateUsername(userID: UUID, username: String, displayName: String, accessToken: String) async throws {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/profiles?id=eq.\(userID)")!
+        var req = baseRequest(url: url, method: "PATCH", accessToken: accessToken)
+        req.httpBody = try JSONSerialization.data(withJSONObject: [
+            "username": username, "display_name": displayName
+        ])
+        let (data, response) = try await URLSession.shared.data(for: req)
+        try validate(response: response, data: data)
+    }
+
     func upsertUserProfile(_ profile: RemoteUser, accessToken: String) async throws {
         let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/profiles")!
         var req = baseRequest(url: url, method: "POST", accessToken: accessToken)
         req.setValue("resolution=merge-duplicates", forHTTPHeaderField: "Prefer")
         req.httpBody = try JSONSerialization.data(withJSONObject: profile.asDictionary())
         _ = try await URLSession.shared.data(for: req)
+    }
+
+    // MARK: - Session refresh
+
+    func refreshSession(refreshToken: String) async throws -> SupabaseSession {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/token?grant_type=refresh_token")!
+        return try await post(url: url, body: ["refresh_token": refreshToken], requiresAuth: false)
     }
 
     // MARK: - Drink Logs
@@ -94,6 +131,12 @@ final class SupabaseService {
         let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/drink_logs?id=eq.\(log.id)")!
         var req = baseRequest(url: url, method: "PATCH", accessToken: accessToken)
         req.httpBody = try JSONSerialization.data(withJSONObject: log.asDictionary())
+        _ = try await URLSession.shared.data(for: req)
+    }
+
+    func deleteDrinkLog(id: UUID, accessToken: String) async throws {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/drink_logs?id=eq.\(id)")!
+        let req = baseRequest(url: url, method: "DELETE", accessToken: accessToken)
         _ = try await URLSession.shared.data(for: req)
     }
 
