@@ -12,41 +12,36 @@ struct RootView: View {
     @State private var deepLinkShop: Shop? = nil
     @State private var deepLinkLog: DrinkLog? = nil
 
-    enum Tab { case home, explore, log, friends, profile }
+    enum Tab { case home, explore, friends, profile }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            HomeView(store: store)
-                .tabItem { Label("Home", systemImage: "house.fill") }
-                .tag(Tab.home)
+        VStack(spacing: 0) {
+            // .page style makes the content itself swipeable left/right,
+            // same as tapping the bar below — "Log" isn't a real screen
+            // (it opens a sheet), so it's intentionally not one of the pages.
+            TabView(selection: $selectedTab) {
+                HomeView(store: store)
+                    .tag(Tab.home)
 
-            ExploreView(store: store)
-                .tabItem { Label("Explore", systemImage: "mappin.circle.fill") }
-                .tag(Tab.explore)
+                ExploreView(store: store)
+                    .tag(Tab.explore)
 
-            Color.clear
-                .tabItem { Label("Log", systemImage: "plus.circle.fill") }
-                .tag(Tab.log)
+                FriendsView(store: store)
+                    .tag(Tab.friends)
+                    .onAppear { notificationService.clearBadge() }
 
-            FriendsView(store: store)
-                .tabItem { Label("Friends", systemImage: "person.2.fill") }
-                .tag(Tab.friends)
-                .badge(pendingFriendsCount)
+                ProfileView(store: store, authService: authService)
+                    .tag(Tab.profile)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
 
-            ProfileView(store: store, authService: authService)
-                .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
-                .tag(Tab.profile)
+            BrewTabBar(
+                selectedTab: $selectedTab,
+                pendingFriendsCount: pendingFriendsCount,
+                onTapLog: { showLogSheet = true }
+            )
         }
         .tint(BrewTheme.Color.accent)
-        .onChange(of: selectedTab) { _, new in
-            if new == .log {
-                showLogSheet = true
-                selectedTab = .home
-            }
-            if new == .friends {
-                notificationService.clearBadge()
-            }
-        }
         .sheet(isPresented: $showLogSheet) {
             LogView(store: store) { newLog in
                 if let newLog { rankingLog = newLog }
@@ -98,5 +93,70 @@ struct RootView: View {
         }.count
         let pendingFriendReqs = store.pendingInboundRequests.count
         return pendingChats + pendingFriendReqs
+    }
+}
+
+// MARK: - Custom Tab Bar
+
+// Stands in for the system tab bar since .page-style TabView doesn't render
+// one. "Log" sits in the middle as a tap-only action (never highlighted as
+// selected — it doesn't correspond to a swipeable page).
+private struct BrewTabBar: View {
+    @Binding var selectedTab: RootView.Tab
+    var pendingFriendsCount: Int
+    var onTapLog: () -> Void
+
+    var body: some View {
+        HStack(spacing: 0) {
+            tabButton(.home, label: "Home", systemImage: "house.fill")
+            tabButton(.explore, label: "Explore", systemImage: "mappin.circle.fill")
+            logButton
+            tabButton(.friends, label: "Friends", systemImage: "person.2.fill", badge: pendingFriendsCount)
+            tabButton(.profile, label: "Profile", systemImage: "person.crop.circle.fill")
+        }
+        .padding(.top, BrewTheme.Spacing.xs)
+        .padding(.bottom, BrewTheme.Spacing.xxs)
+        .background(.bar)
+    }
+
+    private func tabButton(_ tab: RootView.Tab, label: String, systemImage: String, badge: Int = 0) -> some View {
+        let isSelected = selectedTab == tab
+        return Button {
+            withAnimation(.easeInOut(duration: 0.2)) { selectedTab = tab }
+        } label: {
+            VStack(spacing: 2) {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 21))
+                    if badge > 0 {
+                        Text("\(badge)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(4)
+                            .background(Circle().fill(.red))
+                            .offset(x: 10, y: -8)
+                    }
+                }
+                Text(label)
+                    .font(.system(size: 10, weight: .medium))
+            }
+            .foregroundStyle(isSelected ? BrewTheme.Color.accent : BrewTheme.Color.textTertiary)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var logButton: some View {
+        Button(action: onTapLog) {
+            VStack(spacing: 2) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 21))
+                Text("Log")
+                    .font(.system(size: 10, weight: .medium))
+            }
+            .foregroundStyle(BrewTheme.Color.textTertiary)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
     }
 }
