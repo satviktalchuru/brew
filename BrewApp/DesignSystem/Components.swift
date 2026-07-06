@@ -120,6 +120,7 @@ struct AvatarView: View {
     var initials: String
     var size: CGFloat = 44
     var image: UIImage? = nil
+    var avatarURL: URL? = nil
     private var accessibilityDescription: String
 
     init(initials: String, size: CGFloat = 44, image: UIImage? = nil) {
@@ -129,10 +130,15 @@ struct AvatarView: View {
         self.accessibilityDescription = "Avatar \(initials)"
     }
 
+    // Explicit `image` (used for the signed-in user's own avatar right after
+    // picking a new photo, before the upload round-trip finishes) takes
+    // priority; otherwise falls back to the user's synced avatar URL so
+    // friends' real photos render instead of always showing initials.
     init(user: BrewUser, size: CGFloat = 44, image: UIImage? = nil) {
         self.initials = user.initials
         self.size = size
         self.image = image
+        self.avatarURL = image == nil ? user.avatarURL.flatMap(URL.init(string:)) : nil
         self.accessibilityDescription = user.displayName
     }
 
@@ -142,14 +148,16 @@ struct AvatarView: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
+            } else if let avatarURL {
+                AsyncImage(url: avatarURL) { phase in
+                    if case .success(let loaded) = phase {
+                        loaded.resizable().scaledToFill()
+                    } else {
+                        initialsView
+                    }
+                }
             } else {
-                Text(initials)
-                    .font(.system(size: max(size * 0.34, 11), weight: .semibold, design: .default))
-                    .foregroundStyle(BrewTheme.Color.accent)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .frame(width: size, height: size)
-                    .background(BrewTheme.Color.accentLight)
+                initialsView
             }
         }
         .frame(width: size, height: size)
@@ -159,6 +167,16 @@ struct AvatarView: View {
                 .stroke(BrewTheme.Color.raisedSurface.opacity(0.85), lineWidth: 2)
         }
         .accessibilityLabel(accessibilityDescription)
+    }
+
+    private var initialsView: some View {
+        Text(initials)
+            .font(.system(size: max(size * 0.34, 11), weight: .semibold, design: .default))
+            .foregroundStyle(BrewTheme.Color.accent)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .frame(width: size, height: size)
+            .background(BrewTheme.Color.accentLight)
     }
 }
 

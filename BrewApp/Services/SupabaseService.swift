@@ -155,7 +155,8 @@ final class SupabaseService {
                 initials: String(ru.displayName.split(separator: " ").compactMap { $0.first }).prefix(2).uppercased(),
                 isCurrentUser: false,
                 isPublic: ru.isPublic,
-                appearInChats: ru.appearInChats
+                appearInChats: ru.appearInChats,
+                avatarURL: ru.avatarURL
             )
         }
     }
@@ -212,6 +213,34 @@ final class SupabaseService {
         req.httpBody = try JSONSerialization.data(withJSONObject: [
             "username": username, "display_name": displayName
         ])
+        let (data, response) = try await URLSession.shared.data(for: req)
+        try validate(response: response, data: data)
+    }
+
+    // MARK: - Avatar
+
+    // Uploads to the fixed path {userID}/avatar.jpg (always the same file,
+    // so re-uploading overwrites rather than accumulating orphaned images)
+    // and returns the public URL to store on the profile.
+    func uploadAvatar(data: Data, userID: UUID, accessToken: String) async throws -> String {
+        let path = "\(userID.uuidString)/avatar.jpg"
+        let url = URL(string: "\(SupabaseConfig.projectURL)/storage/v1/object/avatars/\(path)")!
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("image/jpeg", forHTTPHeaderField: "Content-Type")
+        req.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
+        req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        req.setValue("true", forHTTPHeaderField: "x-upsert")
+        req.httpBody = data
+        let (responseData, response) = try await URLSession.shared.data(for: req)
+        try validate(response: response, data: responseData)
+        return "\(SupabaseConfig.projectURL)/storage/v1/object/public/avatars/\(path)"
+    }
+
+    func updateAvatarURL(userID: UUID, avatarURL: String, accessToken: String) async throws {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/rest/v1/profiles?id=eq.\(userID)")!
+        var req = baseRequest(url: url, method: "PATCH", accessToken: accessToken)
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["avatar_url": avatarURL])
         let (data, response) = try await URLSession.shared.data(for: req)
         try validate(response: response, data: data)
     }
@@ -414,12 +443,14 @@ struct RemoteUser: Codable {
     var displayName: String
     var isPublic: Bool
     var appearInChats: Bool
+    var avatarURL: String?
 
     enum CodingKeys: String, CodingKey {
         case id, username
         case displayName = "display_name"
         case isPublic = "is_public"
         case appearInChats = "appear_in_chats"
+        case avatarURL = "avatar_url"
     }
 
     func asDictionary() -> [String: Any] {
@@ -532,6 +563,7 @@ struct RemoteSuggestedFriend: Codable {
     var displayName: String
     var isPublic: Bool
     var appearInChats: Bool
+    var avatarURL: String?
     var mutualCount: Int
 
     enum CodingKeys: String, CodingKey {
@@ -539,6 +571,7 @@ struct RemoteSuggestedFriend: Codable {
         case displayName = "display_name"
         case isPublic = "is_public"
         case appearInChats = "appear_in_chats"
+        case avatarURL = "avatar_url"
         case mutualCount = "mutual_count"
     }
 }

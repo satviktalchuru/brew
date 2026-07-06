@@ -191,6 +191,27 @@ extension AppStore {
         runRemote(retryable: .deleteLog(id: id.uuidString)) { try await $0.deleteDrinkLog(id: id, accessToken: $1) }
     }
 
+    // Not wired into the offline WriteQueue (unlike the log/shop pushes
+    // above) — that queue persists small JSON payloads for replay, and an
+    // avatar photo is a poor fit for it. If this fails while offline, the
+    // user can just reopen the photo picker once back online.
+    func pushAvatar(_ data: Data) {
+        guard let supabase, let token = accessToken, let uid = authUserID else { return }
+        Task {
+            do {
+                let publicURL = try await supabase.uploadAvatar(data: data, userID: uid, accessToken: token)
+                try await supabase.updateAvatarURL(userID: uid, avatarURL: publicURL, accessToken: token)
+                await MainActor.run {
+                    if let idx = self.users.firstIndex(where: { $0.id == uid }) {
+                        self.users[idx].avatarURL = publicURL
+                    }
+                }
+            } catch {
+                await MainActor.run { self.syncError = Self.describe(error) }
+            }
+        }
+    }
+
     func pushShop(_ shop: Shop) {
         let remote = RemoteShop(shop)
         runRemote(retryable: .upsertShop(remote)) { try await $0.upsertShop(remote, accessToken: $1) }

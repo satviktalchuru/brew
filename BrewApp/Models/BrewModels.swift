@@ -33,6 +33,7 @@ struct BrewUser: Identifiable, Hashable, Codable {
     var isCurrentUser: Bool
     var isPublic: Bool
     var appearInChats: Bool
+    var avatarURL: String? = nil
 }
 
 struct Shop: Identifiable, Hashable, Codable {

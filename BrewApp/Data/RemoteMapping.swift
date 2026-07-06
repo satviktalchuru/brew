@@ -93,7 +93,8 @@ extension RemoteUser {
             username: user.username,
             displayName: user.displayName,
             isPublic: user.isPublic,
-            appearInChats: user.appearInChats
+            appearInChats: user.appearInChats,
+            avatarURL: user.avatarURL
         )
     }
 
@@ -113,7 +114,8 @@ extension RemoteUser {
             initials: initials.isEmpty ? "?" : initials,
             isCurrentUser: isCurrentUser,
             isPublic: isPublic,
-            appearInChats: appearInChats
+            appearInChats: appearInChats,
+            avatarURL: avatarURL
         )
     }
 }
@@ -157,7 +159,8 @@ extension RemoteSuggestedFriend {
             initials: initials.isEmpty ? "?" : initials,
             isCurrentUser: false,
             isPublic: isPublic,
-            appearInChats: appearInChats
+            appearInChats: appearInChats,
+            avatarURL: avatarURL
         )
         return (user, mutualCount)
     }
