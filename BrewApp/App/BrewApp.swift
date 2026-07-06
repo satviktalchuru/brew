@@ -11,25 +11,36 @@ struct BrewApp: App {
     @AppStorage("brew.quizTaken")     private var quizTaken     = false
     @AppStorage("brew.usernameSet")   private var usernameSet   = false
 
+    @State private var showLaunchAnimation = true
+
     var body: some Scene {
         WindowGroup {
-            Group {
-                if !authService.isAuthenticated {
-                    OnboardingView(authService: authService, store: store, onAuthComplete: {})
-                } else if needsUsername {
-                    UsernameSetupView(store: store) {
-                        usernameSet = true
+            ZStack {
+                Group {
+                    if !authService.isAuthenticated {
+                        OnboardingView(authService: authService, store: store, onAuthComplete: {})
+                    } else if needsUsername {
+                        UsernameSetupView(store: store) {
+                            usernameSet = true
+                        }
+                    } else if !quizTaken {
+                        TasteQuizView(store: store) {
+                            quizTaken = true
+                        }
+                    } else if !quizCompleted {
+                        FirstPicksView(store: store, locationService: locationService) {
+                            quizCompleted = true
+                        }
+                    } else {
+                        RootView(store: store, authService: authService, notificationService: notificationService)
                     }
-                } else if !quizTaken {
-                    TasteQuizView(store: store) {
-                        quizTaken = true
+                }
+
+                if showLaunchAnimation {
+                    LaunchMeltView {
+                        showLaunchAnimation = false
                     }
-                } else if !quizCompleted {
-                    FirstPicksView(store: store, locationService: locationService) {
-                        quizCompleted = true
-                    }
-                } else {
-                    RootView(store: store, authService: authService, notificationService: notificationService)
+                    .transition(.opacity)
                 }
             }
             .task {

@@ -1,5 +1,12 @@
 import SwiftUI
 
+// Cold-start flow: a brand-new account has no drink logs and (as of the
+// sign-in sync fix) no seeded mock shops either, so this pulls real nearby
+// cafes straight from MapKit and walks the user through rating 2-3 of them.
+// Ranking here is relative preference, not absolute scores, so a user with
+// zero logs has nothing to compare against — this seeds just enough real
+// data that their first head-to-head and their first appearance in a
+// friend's feed both have something behind them.
 struct FirstPicksView: View {
     var store: AppStore
     var locationService: LocationService
@@ -10,6 +17,16 @@ struct FirstPicksView: View {
     @AppStorage("brew.quizRoast")     private var savedRoast     = "medium"
 
     @State private var appeared = false
+    @State private var nearbyShops: [Shop] = []
+    @State private var isLoadingShops = true
+    @State private var loggedShopIDs: Set<UUID> = []
+
+    @State private var activeLogShop: Shop?
+    @State private var rankingLog: DrinkLog?
+    @State private var pendingPairs: [(DrinkLog, DrinkLog)] = []
+    @State private var showHeadToHead = false
+
+    private let places = PlacesService()
 
     private var quizProfile: QuizProfile {
         QuizProfile(
@@ -22,12 +39,14 @@ struct FirstPicksView: View {
     private var recommendations: [ShopRecommendation] {
         RecommendationEngine.recommendations(
             for: quizProfile,
-            shops: store.shops,
+            shops: nearbyShops,
             logs: store.drinkLogs,
             locationService: locationService,
             limit: 3
         )
     }
+
+    private var loggedCount: Int { loggedShopIDs.count }
 
     var body: some View {
         ZStack {
@@ -42,6 +61,48 @@ struct FirstPicksView: View {
                 bottomCTA
             }
         }
+        .task { await loadNearbyShops() }
+        .sheet(item: $activeLogShop) { shop in
+            LogView(store: store, preselectedShop: shop) { newLog in
+                if let newLog {
+                    loggedShopIDs.insert(shop.id)
+                    rankingLog = newLog
+                }
+            }
+        }
+        .sheet(item: $rankingLog) { log in
+            RankPlacementView(store: store, newLog: log) { wantsMore in
+                rankingLog = nil
+                guard wantsMore else { return }
+                let pairs = store.candidateComparisonPairs()
+                if !pairs.isEmpty {
+                    pendingPairs = pairs
+                    showHeadToHead = true
+                }
+            }
+        }
+        .sheet(isPresented: $showHeadToHead) {
+            HeadToHeadView(store: store, pairs: pendingPairs) {
+                pendingPairs = []
+            }
+        }
+    }
+
+    // MARK: - Nearby shops
+
+    // Mirrors ExploreView's approach: wait briefly for a location fix since
+    // permission may still be resolving right as onboarding reaches this screen.
+    @MainActor
+    private func loadNearbyShops() async {
+        var coordinate = locationService.coordinate
+        var attempts = 0
+        while coordinate == nil && attempts < 10 {
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            coordinate = locationService.coordinate
+            attempts += 1
+        }
+        nearbyShops = await places.searchCoffeeShops(near: coordinate, query: "coffee")
+        isLoadingShops = false
     }
 
     // MARK: - Scroll
@@ -52,9 +113,25 @@ struct FirstPicksView: View {
                 header
                     .padding(.top, BrewTheme.Spacing.xl)
 
-                VStack(spacing: BrewTheme.Spacing.sm) {
-                    ForEach(Array(recommendations.enumerated()), id: \.element.id) { index, rec in
-                        RecommendationCard(rank: index + 1, rec: rec)
+                if isLoadingShops {
+                    ProgressView()
+                        .tint(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, BrewTheme.Spacing.xl)
+                } else if recommendations.isEmpty {
+                    Text("Couldn't find cafes near you yet — no worries, you can log a drink anytime.")
+                        .font(BrewTheme.Font.callout)
+                        .foregroundStyle(.white.opacity(0.6))
+                        .padding(.vertical, BrewTheme.Spacing.lg)
+                } else {
+                    VStack(spacing: BrewTheme.Spacing.sm) {
+                        ForEach(Array(recommendations.enumerated()), id: \.element.id) { index, rec in
+                            Button {
+                                activeLogShop = rec.shop
+                            } label: {
+                                RecommendationCard(rank: index + 1, rec: rec, isLogged: loggedShopIDs.contains(rec.shop.id))
+                            }
+                            .buttonStyle(.plain)
                             .offset(y: appeared ? 0 : 40)
                             .opacity(appeared ? 1 : 0)
                             .animation(
@@ -62,6 +139,7 @@ struct FirstPicksView: View {
                                     .delay(Double(index) * 0.12),
                                 value: appeared
                             )
+                        }
                     }
                 }
 
@@ -89,10 +167,14 @@ struct FirstPicksView: View {
                     .textCase(.uppercase)
             }
 
-            Text("Your\nFirst Picks")
+            Text("Rate Your\nFirst Picks")
                 .font(.system(size: 40, weight: .black, design: .serif))
                 .foregroundStyle(.white)
                 .lineSpacing(2)
+
+            Text("Tap a spot below to log what you'd order — it's how your rankings (and your friends' recommendations) get started.")
+                .font(BrewTheme.Font.footnote)
+                .foregroundStyle(.white.opacity(0.5))
 
             HStack(spacing: BrewTheme.Spacing.xs) {
                 profilePill(icon: "drop.fill",  label: sweetLabel)
@@ -154,7 +236,7 @@ struct FirstPicksView: View {
         VStack(spacing: BrewTheme.Spacing.xs) {
             Button(action: onStart) {
                 HStack(spacing: BrewTheme.Spacing.xs) {
-                    Text("Start Brewing")
+                    Text(loggedCount == 0 ? "Skip for now" : "Continue")
                         .font(BrewTheme.Font.bodySemibold)
                     Image(systemName: "arrow.right")
                         .font(.callout.weight(.semibold))
@@ -166,7 +248,7 @@ struct FirstPicksView: View {
                 .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.medium, style: .continuous))
             }
 
-            Text("Log your first drink and let the rankings begin")
+            Text(ctaSubtitle)
                 .font(BrewTheme.Font.caption)
                 .foregroundStyle(.white.opacity(0.35))
                 .multilineTextAlignment(.center)
@@ -180,6 +262,14 @@ struct FirstPicksView: View {
                 startPoint: .top, endPoint: .bottom
             )
         )
+    }
+
+    private var ctaSubtitle: String {
+        switch loggedCount {
+        case 0: return "Rate 2-3 coffees above to kick off your rankings"
+        case 1, 2: return "\(loggedCount) logged — rate a couple more, or continue anytime"
+        default: return "You're all set — the rankings begin now"
+        }
     }
 
     // MARK: - Label helpers
@@ -200,6 +290,7 @@ struct FirstPicksView: View {
 private struct RecommendationCard: View {
     var rank: Int
     var rec: ShopRecommendation
+    var isLogged: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: BrewTheme.Spacing.sm) {
@@ -222,14 +313,26 @@ private struct RecommendationCard: View {
 
                 Spacer()
 
-                VStack(spacing: 1) {
-                    Text("\(rec.matchScore)%")
-                        .font(.system(size: 20, weight: .black, design: .rounded))
-                        .foregroundStyle(Color(fpHex: "#C65B1A"))
-                    Text("match")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.35))
-                        .textCase(.uppercase)
+                if isLogged {
+                    VStack(spacing: 1) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundStyle(Color(fpHex: "#C65B1A"))
+                        Text("logged")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.35))
+                            .textCase(.uppercase)
+                    }
+                } else {
+                    VStack(spacing: 1) {
+                        Text("\(rec.matchScore)%")
+                            .font(.system(size: 20, weight: .black, design: .rounded))
+                            .foregroundStyle(Color(fpHex: "#C65B1A"))
+                        Text("match")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.35))
+                            .textCase(.uppercase)
+                    }
                 }
             }
 
@@ -244,6 +347,16 @@ private struct RecommendationCard: View {
                             .font(.caption)
                             .foregroundStyle(Color(fpHex: "#C65B1A").opacity(0.8))
                         Text("Try: \(drink.drinkName)")
+                            .font(BrewTheme.Font.captionSemibold)
+                            .foregroundStyle(.white.opacity(0.85))
+                            .lineLimit(1)
+                    }
+                } else {
+                    HStack(spacing: 6) {
+                        Image(systemName: "cup.and.saucer.fill")
+                            .font(.caption)
+                            .foregroundStyle(Color(fpHex: "#C65B1A").opacity(0.8))
+                        Text(isLogged ? "Rated" : "Tap to rate what you order")
                             .font(BrewTheme.Font.captionSemibold)
                             .foregroundStyle(.white.opacity(0.85))
                             .lineLimit(1)

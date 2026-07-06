@@ -249,6 +249,10 @@ private struct ComparisonCard: View {
                     .foregroundStyle(BrewTheme.Color.textSecondary)
                     .lineLimit(1)
 
+                Label("\(Int(log.eloScore.rounded())) Elo", systemImage: "chart.line.uptrend.xyaxis")
+                    .font(BrewTheme.Font.captionSemibold)
+                    .foregroundStyle(BrewTheme.Color.accent)
+
                 Spacer(minLength: BrewTheme.Spacing.xs)
 
                 BrewChip(title: log.roast.label, style: .roast(log.roast))

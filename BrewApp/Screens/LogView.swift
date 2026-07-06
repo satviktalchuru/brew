@@ -20,7 +20,7 @@ struct LogView: View {
     @State private var selectedFlavors: [String]
     @State private var showShopPicker = false
 
-    init(store: AppStore, editingLog: DrinkLog? = nil, onSaved: @escaping (DrinkLog?) -> Void) {
+    init(store: AppStore, editingLog: DrinkLog? = nil, preselectedShop: Shop? = nil, onSaved: @escaping (DrinkLog?) -> Void) {
         self.store = store
         self.editingLog = editingLog
         self.onSaved = onSaved
@@ -45,7 +45,8 @@ struct LogView: View {
             _wouldOrder = State(initialValue: .yes)
             _notes = State(initialValue: "")
             _selectedFlavors = State(initialValue: [])
-            _selectedShop = State(initialValue: nil)
+            _selectedShop = State(initialValue: preselectedShop)
+            if let preselectedShop { store.registerShop(preselectedShop) }
         }
     }
 
