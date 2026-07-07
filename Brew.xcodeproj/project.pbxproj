@@ -42,6 +42,7 @@
 		CF30B8C7D50FE86D16D969CE /* UsernameSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9519A50892C6576114BE4984 /* UsernameSetupView.swift */; };
 		D2FE8CFC2EBAEDA96EEDA117 /* TasteProfileEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BAD20520A55B8B78984A732 /* TasteProfileEngine.swift */; };
 		D648BEAC2B8A7A9702C9192A /* TasteQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1FA59D8BDA2DE0F974793B1 /* TasteQuizView.swift */; };
+		D6C46FCA374E4447A7241D6C /* LaunchMeltView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C8DCF19AAA9E78289D27C36 /* LaunchMeltView.swift */; };
 		D89BFBF228737C7A0BECA6D0 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1D748D9B25E10B361206A36 /* OnboardingView.swift */; };
 		D8FD0646DF58EFB651C4E98C /* AppStore+Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BC060B762ABA18CB3DC3B5 /* AppStore+Sync.swift */; };
 		DBFF32F1722D22ED18BD6B9C /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A26C779D55A2997A402638E /* ProfileView.swift */; };
@@ -72,6 +73,7 @@
 		16ACEC05B21CDA586D4C386E /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		182D5D97909C4C0BDEDF16A6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		198DCC46AF321172057BFA05 /* FriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsView.swift; sourceTree = "<group>"; };
+		1C8DCF19AAA9E78289D27C36 /* LaunchMeltView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchMeltView.swift; sourceTree = "<group>"; };
 		2BB45492D1D67B650D192206 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		3979B6368272F579443645ED /* BrewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewModels.swift; sourceTree = "<group>"; };
 		3A26C779D55A2997A402638E /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
@@ -190,6 +192,7 @@
 				198DCC46AF321172057BFA05 /* FriendsView.swift */,
 				D27E0F289EEE84C77AB2C49A /* HeadToHeadView.swift */,
 				1123640E8C5190D1A53D9C15 /* HomeView.swift */,
+				1C8DCF19AAA9E78289D27C36 /* LaunchMeltView.swift */,
 				AC38DA5BE3DDDD782CEE946B /* LogView.swift */,
 				E1D748D9B25E10B361206A36 /* OnboardingView.swift */,
 				3A26C779D55A2997A402638E /* ProfileView.swift */,
@@ -362,6 +365,7 @@
 				F1D234978E843B7672BCDC99 /* HeadToHeadView.swift in Sources */,
 				2FC7E59949ABE2EE1C77077E /* HomeView.swift in Sources */,
 				A4338629BC8055AE21686AB3 /* KeychainStore.swift in Sources */,
+				D6C46FCA374E4447A7241D6C /* LaunchMeltView.swift in Sources */,
 				330C5D390AEED6D1FB80371D /* LocationService.swift in Sources */,
 				EC7AD5D21770F964C361D86B /* LogView.swift in Sources */,
 				F555674CD8438171EA4A54F8 /* MockData.swift in Sources */,

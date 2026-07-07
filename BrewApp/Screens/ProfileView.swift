@@ -25,6 +25,8 @@ struct ProfileView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: BrewTheme.Spacing.md) {
+                    BrewPageTitle(currentUser?.displayName ?? "Profile")
+                        .padding(.horizontal, BrewTheme.Spacing.sm)
                     profileHeader
                     tasteProfileCard
                     wishlistCard
@@ -33,7 +35,9 @@ struct ProfileView: View {
                 .padding(.vertical, BrewTheme.Spacing.sm)
             }
             .navigationTitle(currentUser?.displayName ?? "Profile")
-            .navigationBarTitleDisplayMode(.large)
+            // Inline: large titles clip inside the paged root TabView; the
+            // serif header above renders the name instead.
+            .navigationBarTitleDisplayMode(.inline)
             .brewScreenBackground()
             .navigationDestination(for: DrinkLog.self) { log in
                 DrinkDetailView(store: store, log: log)
@@ -224,7 +228,7 @@ struct ProfileView: View {
                             .textCase(.uppercase)
                         HStack(spacing: BrewTheme.Spacing.xs) {
                             ForEach(profile.topFlavorDescriptors.prefix(4), id: \.self) { flavor in
-                                BrewChip(title: flavor, style: .neutral)
+                                flavorChip(flavor)
                             }
                         }
                     }
@@ -232,6 +236,23 @@ struct ProfileView: View {
             }
         }
         .padding(.horizontal, BrewTheme.Spacing.sm)
+    }
+
+    // Profile-only treatment: each top flavor is tinted to match its word
+    // (blackberry = deep purple, caramel = golden brown, ...). Other screens
+    // intentionally keep the neutral chip style.
+    private func flavorChip(_ flavor: String) -> some View {
+        let tint = FlavorPalette.color(for: flavor)
+        return Text(flavor)
+            .font(BrewTheme.Font.captionSemibold)
+            .foregroundStyle(tint)
+            .padding(.horizontal, BrewTheme.Spacing.xs)
+            .padding(.vertical, 6)
+            .background(tint.opacity(0.16))
+            .clipShape(Capsule())
+            .overlay {
+                Capsule().stroke(tint.opacity(0.35), lineWidth: 1)
+            }
     }
 
     private var roastBreakdown: some View {
@@ -590,5 +611,34 @@ struct ComparisonHistoryView: View {
                     .multilineTextAlignment(.trailing)
             }
         }
+    }
+}
+
+// MARK: - Flavor word -> color (Profile page only)
+
+// Semantic colors for every descriptor in SimpleFlavors.all; unknown words
+// fall back to a stable hue derived from the word itself.
+private enum FlavorPalette {
+    static let hexByWord: [String: String] = [
+        "Blackberry": "#4A2545", "Blueberry": "#3B4E7A", "Raspberry": "#B23A5E",
+        "Peach": "#E8945A", "Apple": "#6E9E4F", "Orange": "#D97B18",
+        "Lemon": "#C2A61B", "Grapefruit": "#D96A52",
+        "Jasmine": "#7C9A5C", "Rose": "#C4608F", "Lavender": "#8E7CC3",
+        "Caramel": "#B5651D", "Vanilla": "#A98A4E", "Maple": "#8F5B2B",
+        "Honey": "#C29225", "Brown Sugar": "#9C6644",
+        "Chocolate": "#5D3A1A", "Cocoa": "#6B4226", "Dark Chocolate": "#3B2314",
+        "Almond": "#A9865B", "Hazelnut": "#8E6C4E", "Walnut": "#77563E",
+        "Toasted Grain": "#A17F42", "Bread": "#B08D57",
+        "Clove": "#7A4B2A", "Cinnamon": "#A05A2C",
+        "Smoke": "#5C5C5C", "Tobacco": "#6E5335", "Cedar": "#7D5A44"
+    ]
+
+    static func color(for word: String) -> SwiftUI.Color {
+        if let hex = hexByWord[word] {
+            return SwiftUI.Color(hex: hex)
+        }
+        // Stable fallback hue for descriptors not in the map.
+        let hue = Double(abs(word.unicodeScalars.reduce(0) { ($0 &* 31 &+ Int($1.value)) & 0xFFFF }) % 360) / 360.0
+        return SwiftUI.Color(hue: hue, saturation: 0.55, brightness: 0.5)
     }
 }

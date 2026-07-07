@@ -12,11 +12,14 @@ struct LaunchMeltView: View {
 
     // Fixed per-character variation so the melt looks organic without
     // being randomized on every render (SwiftUI re-evaluates body often).
-    private let dripDelay: [Double] = [0, 0.05, 0.10, 0.03, 0.14]
+    private let dripDelay: [Double] = [0, 0.12, 0.24, 0.08, 0.32]
     private let dripStretch: [CGFloat] = [1.8, 2.6, 1.6, 2.2, 3.0]
     private let dripDrift: [CGFloat] = [-2, 3, -4, 2, 0]
 
-    @State private var melt: CGFloat = 0
+    private let holdBeforeMelt = 0.4
+    private let meltDuration = 1.4
+
+    @State private var melting = false
     @State private var backgroundFade: Double = 1
 
     var body: some View {
@@ -27,6 +30,7 @@ struct LaunchMeltView: View {
 
             HStack(spacing: 0) {
                 ForEach(Array(characters.enumerated()), id: \.offset) { index, char in
+                    let melt: CGFloat = melting ? 1 : 0
                     Text(String(char))
                         .font(.custom("Georgia-Bold", size: 48))
                         .foregroundStyle(.white)
@@ -38,21 +42,28 @@ struct LaunchMeltView: View {
                         )
                         .offset(
                             x: melt * dripDrift[index % dripDrift.count],
-                            y: melt * 46
+                            y: melt * 60
                         )
                         .blur(radius: melt * 5)
                         .opacity(1 - melt)
+                        // Per-letter delay makes the word drip apart unevenly
+                        // instead of dropping as one block.
+                        .animation(
+                            .easeIn(duration: meltDuration)
+                                .delay(holdBeforeMelt + dripDelay[index % dripDelay.count]),
+                            value: melting
+                        )
                 }
             }
         }
+        .allowsHitTesting(false)
         .onAppear {
-            withAnimation(.easeIn(duration: 1.0).delay(0.35)) {
-                melt = 1
-            }
-            withAnimation(.easeOut(duration: 0.4).delay(1.3)) {
+            melting = true
+            let lastLetterEnds = holdBeforeMelt + (dripDelay.max() ?? 0) + meltDuration
+            withAnimation(.easeOut(duration: 0.45).delay(lastLetterEnds - 0.3)) {
                 backgroundFade = 0
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + lastLetterEnds + 0.2) {
                 onFinished()
             }
         }

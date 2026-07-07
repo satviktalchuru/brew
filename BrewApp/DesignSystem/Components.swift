@@ -222,6 +222,23 @@ struct BrewPrimaryButton: View {
     }
 }
 
+// In-content page title. Replaces UIKit large navigation titles, which
+// clip/shift when rendered inside the paged (swipeable) root TabView.
+struct BrewPageTitle: View {
+    var text: String
+
+    init(_ text: String) { self.text = text }
+
+    var body: some View {
+        Text(text)
+            .font(BrewTheme.Font.heading(size: 30, weight: .bold, relativeTo: .largeTitle))
+            .foregroundStyle(BrewTheme.Color.textPrimary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
 struct BrewSectionLabel: View {
     var title: String
     var subtitle: String?

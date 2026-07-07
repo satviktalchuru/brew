@@ -8,6 +8,11 @@ struct FriendsView: View {
     var body: some View {
         NavigationStack {
             List {
+                BrewPageTitle("Friends")
+                    .listRowBackground(SwiftUI.Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
+
                 friendRequestsSection
                 chatRequestsSection
                 upcomingChatsSection
@@ -16,8 +21,9 @@ struct FriendsView: View {
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
-            .background(BrewTheme.Color.background)
+            .brewScreenBackground()
             .navigationTitle("Friends")
+            .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: BrewUser.self) { user in
                 FriendProfileView(store: store, user: user)
             }

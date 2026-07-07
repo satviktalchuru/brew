@@ -102,7 +102,12 @@ extension SwiftUI.Color {
 }
 
 extension View {
+    // Screen background + a matching navigation-bar background so the theme
+    // extends all the way into the status bar area (no white strip at the
+    // top when content scrolls under the bar).
     func brewScreenBackground() -> some View {
         background(BrewTheme.Color.background.ignoresSafeArea())
+            .toolbarBackground(BrewTheme.Color.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
     }
 }

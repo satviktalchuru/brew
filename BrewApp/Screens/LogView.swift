@@ -334,7 +334,7 @@ private struct ShopPickerSheet: View {
             }
             .navigationTitle("Choose a Shop")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $search, prompt: "Search coffee shops nearby")
+            .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search coffee shops nearby")
             .task(id: search) { await runLiveSearch() }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

@@ -19,18 +19,20 @@ declare
   final_username text;
   suffix int := 0;
 begin
-  base_username := lower(regexp_replace(
-    coalesce(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
-    '[^a-z0-9_]', '_', 'g'
-  ));
+  -- Lowercase FIRST, then strip: "John.Doe" -> "johndoe" (not "_ohn__oe",
+  -- which the previous version produced by stripping before lowercasing).
+  base_username := regexp_replace(
+    lower(coalesce(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1))),
+    '[^a-z0-9_]', '', 'g'
+  );
 
   if char_length(base_username) < 3 then
-    base_username := rpad(base_username, 3, '0');
+    base_username := rpad(coalesce(nullif(base_username, ''), 'brew'), 3, '0');
   end if;
   base_username := left(base_username, 20);
 
   final_username := base_username;
-  while exists (select 1 from profiles where username = final_username) loop
+  while exists (select 1 from profiles where username = final_username) and suffix < 500 loop
     suffix := suffix + 1;
     final_username := left(base_username, 20 - length(suffix::text) - 1) || '_' || suffix;
   end loop;
@@ -39,7 +41,11 @@ begin
   values (
     new.id,
     final_username,
-    left(coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)), 60)
+    left(coalesce(
+      nullif(new.raw_user_meta_data->>'full_name', ''),
+      nullif(split_part(new.email, '@', 1), ''),
+      'Brew Fan'
+    ), 60)
   )
   on conflict (id) do nothing;
   return new;

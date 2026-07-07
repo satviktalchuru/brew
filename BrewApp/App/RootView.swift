@@ -14,8 +14,10 @@ struct RootView: View {
 
     enum Tab { case home, explore, friends, profile }
 
+    @State private var tabBarHidden = false
+
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack(alignment: .bottom) {
             // .page style makes the content itself swipeable left/right,
             // same as tapping the bar below — "Log" isn't a real screen
             // (it opens a sheet), so it's intentionally not one of the pages.
@@ -23,7 +25,7 @@ struct RootView: View {
                 HomeView(store: store)
                     .tag(Tab.home)
 
-                ExploreView(store: store)
+                ExploreView(store: store, tabBarHidden: $tabBarHidden)
                     .tag(Tab.explore)
 
                 FriendsView(store: store)
@@ -34,13 +36,24 @@ struct RootView: View {
                     .tag(Tab.profile)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
+            // Reserve scrollable space so list bottoms can clear the floating bar.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if !tabBarHidden {
+                    SwiftUI.Color.clear.frame(height: 58)
+                }
+            }
 
-            BrewTabBar(
-                selectedTab: $selectedTab,
-                pendingFriendsCount: pendingFriendsCount,
-                onTapLog: { showLogSheet = true }
-            )
+            if !tabBarHidden {
+                BrewTabBar(
+                    selectedTab: $selectedTab,
+                    pendingFriendsCount: pendingFriendsCount,
+                    onTapLog: { showLogSheet = true }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
+        .animation(.spring(response: 0.32, dampingFraction: 0.9), value: tabBarHidden)
+        .background(BrewTheme.Color.background.ignoresSafeArea())
         .tint(BrewTheme.Color.accent)
         .sheet(isPresented: $showLogSheet) {
             LogView(store: store) { newLog in
@@ -114,9 +127,15 @@ private struct BrewTabBar: View {
             tabButton(.friends, label: "Friends", systemImage: "person.2.fill", badge: pendingFriendsCount)
             tabButton(.profile, label: "Profile", systemImage: "person.crop.circle.fill")
         }
-        .padding(.top, BrewTheme.Spacing.xs)
+        .padding(.horizontal, BrewTheme.Spacing.xs)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay {
+            Capsule().stroke(BrewTheme.Color.border.opacity(0.6), lineWidth: 1)
+        }
+        .shadow(color: BrewTheme.Color.roastDark.opacity(0.18), radius: 14, x: 0, y: 6)
+        .padding(.horizontal, BrewTheme.Spacing.md)
         .padding(.bottom, BrewTheme.Spacing.xxs)
-        .background(.bar)
     }
 
     private func tabButton(_ tab: RootView.Tab, label: String, systemImage: String, badge: Int = 0) -> some View {
@@ -124,38 +143,41 @@ private struct BrewTabBar: View {
         return Button {
             withAnimation(.easeInOut(duration: 0.2)) { selectedTab = tab }
         } label: {
-            VStack(spacing: 2) {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: systemImage)
-                        .font(.system(size: 21))
-                    if badge > 0 {
-                        Text("\(badge)")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.white)
-                            .padding(4)
-                            .background(Circle().fill(.red))
-                            .offset(x: 10, y: -8)
+            ZStack(alignment: .topTrailing) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 22))
+                    .frame(width: 44, height: 40)
+                    .background {
+                        if isSelected {
+                            Capsule().fill(BrewTheme.Color.accentLight)
+                        }
                     }
+                if badge > 0 {
+                    Text("\(badge)")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(4)
+                        .background(Circle().fill(.red))
+                        .offset(x: 6, y: -4)
                 }
-                Text(label)
-                    .font(.system(size: 10, weight: .medium))
             }
             .foregroundStyle(isSelected ? BrewTheme.Color.accent : BrewTheme.Color.textTertiary)
             .frame(maxWidth: .infinity)
+            .accessibilityLabel(label)
         }
         .buttonStyle(.plain)
     }
 
     private var logButton: some View {
         Button(action: onTapLog) {
-            VStack(spacing: 2) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 21))
-                Text("Log")
-                    .font(.system(size: 10, weight: .medium))
-            }
-            .foregroundStyle(BrewTheme.Color.textTertiary)
-            .frame(maxWidth: .infinity)
+            Image(systemName: "plus")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(BrewTheme.Color.accent))
+                .shadow(color: BrewTheme.Color.accent.opacity(0.35), radius: 6, y: 3)
+                .frame(maxWidth: .infinity)
+                .accessibilityLabel("Log a drink")
         }
         .buttonStyle(.plain)
     }

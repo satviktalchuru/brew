@@ -48,37 +48,22 @@ struct TasteRecapView: View {
                 Color(recapHex: "#1A0F07").ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    Spacer(minLength: 0)
-
-                    cards[cardIndex]
-                        .id(cardIndex)
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                            removal: .move(edge: .leading).combined(with: .opacity)
-                        ))
-                        .animation(.spring(response: 0.45, dampingFraction: 0.82), value: cardIndex)
-                        .padding(.horizontal, BrewTheme.Spacing.md)
-                        .contentShape(Rectangle())
-                        .gesture(
-                            DragGesture(minimumDistance: 24)
-                                .onEnded { value in
-                                    if value.translation.width < -40 {
-                                        // swipe right-to-left -> next (or finish on the last card)
-                                        if cardIndex < cards.count - 1 {
-                                            withAnimation { cardIndex += 1 }
-                                        } else {
-                                            dismiss()
-                                        }
-                                    } else if value.translation.width > 40 {
-                                        // swipe left-to-right -> back
-                                        if cardIndex > 0 {
-                                            withAnimation { cardIndex -= 1 }
-                                        }
-                                    }
-                                }
-                        )
-
-                    Spacer(minLength: 0)
+                    // Native paging tracks the finger continuously (rubber-
+                    // banding, interruptible), unlike the old end-of-drag
+                    // gesture that snapped only after release.
+                    TabView(selection: $cardIndex) {
+                        ForEach(Array(cards.enumerated()), id: \.offset) { index, card in
+                            VStack {
+                                Spacer(minLength: 0)
+                                card
+                                    .padding(.horizontal, BrewTheme.Spacing.md)
+                                Spacer(minLength: 0)
+                            }
+                            .tag(index)
+                        }
+                    }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    .animation(.easeOut(duration: 0.25), value: cardIndex)
 
                     HStack(spacing: 8) {
                         ForEach(0..<cards.count, id: \.self) { i in
@@ -90,10 +75,17 @@ struct TasteRecapView: View {
                     }
                     .padding(.bottom, BrewTheme.Spacing.sm)
 
-                    Text(cardIndex < cards.count - 1 ? "Swipe to continue" : "Swipe to finish")
-                        .font(BrewTheme.Font.caption)
-                        .foregroundStyle(.white.opacity(0.4))
-                        .padding(.bottom, BrewTheme.Spacing.lg)
+                    if cardIndex < cards.count - 1 {
+                        Text("Swipe to continue")
+                            .font(BrewTheme.Font.caption)
+                            .foregroundStyle(.white.opacity(0.4))
+                            .padding(.bottom, BrewTheme.Spacing.lg)
+                    } else {
+                        Button("Finish") { dismiss() }
+                            .font(BrewTheme.Font.captionSemibold)
+                            .foregroundStyle(Color(recapHex: "#C65B1A"))
+                            .padding(.bottom, BrewTheme.Spacing.lg)
+                    }
                 }
             }
             .navigationTitle("\(String(year)) in Brew")

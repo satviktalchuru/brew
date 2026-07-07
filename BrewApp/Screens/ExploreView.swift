@@ -3,7 +3,9 @@ import MapKit
 
 struct ExploreView: View {
     var store: AppStore
+    @Binding var tabBarHidden: Bool
     @State private var searchText = ""
+    @State private var searchPresented = false
     @State private var showMap = false
     @State private var selectedShop: Shop?
     @State private var activeFilter: ExploreFilter = .all
@@ -41,7 +43,18 @@ struct ExploreView: View {
                 }
             }
             .navigationTitle("Explore")
-            .searchable(text: $searchText, prompt: "Search coffee shops")
+            // Inline instead of .large: UIKit large titles clip/shift inside
+            // the paged root TabView. The big serif header lives in-content.
+            .navigationBarTitleDisplayMode(.inline)
+            .searchable(
+                text: $searchText,
+                isPresented: $searchPresented,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: "Search coffee shops"
+            )
+            .onChange(of: searchPresented) { _, active in
+                tabBarHidden = active
+            }
             .task { await loadNearby() }
             .task(id: searchText) { await runLiveSearch() }
             .brewScreenBackground()
@@ -68,9 +81,12 @@ struct ExploreView: View {
     private var listView: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: BrewTheme.Spacing.sm) {
-                filterChips
+                BrewPageTitle("Explore")
                     .padding(.horizontal, BrewTheme.Spacing.sm)
                     .padding(.top, BrewTheme.Spacing.xs)
+
+                filterChips
+                    .padding(.horizontal, BrewTheme.Spacing.sm)
 
                 trendingSection
 
