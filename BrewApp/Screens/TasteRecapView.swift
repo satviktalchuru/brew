@@ -181,7 +181,9 @@ struct TasteRecapView: View {
             VStack(spacing: BrewTheme.Spacing.sm) {
                 FlavorWheelView(tags: myLogs.flatMap(\.flavorTags), size: 200)
                 if !profile.topFlavorDescriptors.isEmpty {
-                    HStack(spacing: BrewTheme.Spacing.xs) {
+                    // FlowLine wraps whole pills to the next row, so each oval
+                    // keeps its word on a single line at full width.
+                    FlowLine {
                         ForEach(profile.topFlavorDescriptors.prefix(4), id: \.self) { f in
                             BrewChip(title: f, style: .neutral)
                         }

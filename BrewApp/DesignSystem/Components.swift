@@ -44,12 +44,17 @@ struct BrewChip: View {
 
             Text(title)
                 .font(BrewTheme.Font.captionSemibold)
+                .lineLimit(1)
         }
         .foregroundStyle(foregroundColor)
         .padding(.horizontal, BrewTheme.Spacing.xs)
         .padding(.vertical, 6)
         .background(backgroundColor)
         .clipShape(Capsule())
+        // The capsule always stretches to fit its word on one line; wrapping
+        // containers (FlowLine) move whole chips to the next row instead of
+        // breaking text inside the oval.
+        .fixedSize(horizontal: true, vertical: false)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(title)
     }
@@ -495,7 +500,7 @@ struct RankedDrinkRow: View {
     }
 }
 
-private struct FlowLine<Content: View>: View {
+struct FlowLine<Content: View>: View {
     private let content: Content
 
     init(@ViewBuilder content: () -> Content) {

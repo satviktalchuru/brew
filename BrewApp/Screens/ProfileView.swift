@@ -226,7 +226,7 @@ struct ProfileView: View {
                             .font(BrewTheme.Font.captionSemibold)
                             .foregroundStyle(BrewTheme.Color.textSecondary)
                             .textCase(.uppercase)
-                        HStack(spacing: BrewTheme.Spacing.xs) {
+                        FlowLine {
                             ForEach(profile.topFlavorDescriptors.prefix(4), id: \.self) { flavor in
                                 flavorChip(flavor)
                             }
@@ -245,14 +245,16 @@ struct ProfileView: View {
         let tint = FlavorPalette.color(for: flavor)
         return Text(flavor)
             .font(BrewTheme.Font.captionSemibold)
-            .foregroundStyle(tint)
+            .lineLimit(1)
             .padding(.horizontal, BrewTheme.Spacing.xs)
             .padding(.vertical, 6)
+            .foregroundStyle(tint)
             .background(tint.opacity(0.16))
             .clipShape(Capsule())
             .overlay {
                 Capsule().stroke(tint.opacity(0.35), lineWidth: 1)
             }
+            .fixedSize(horizontal: true, vertical: false)
     }
 
     private var roastBreakdown: some View {
