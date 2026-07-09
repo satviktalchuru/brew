@@ -59,12 +59,22 @@ final class AuthService {
     // taps them) can't consume it. Also sidesteps needing any redirect_to
     // URL allow-listed in the Supabase dashboard.
 
+    // Accepts either a 6-digit code (if custom SMTP + a template edit ever
+    // exposes {{ .Token }}) or — the workaround for the default, un-editable
+    // template — the confirmation link itself pasted in (or just the token
+    // value out of it). Never fetches the link; only POSTs the extracted hash.
     @discardableResult
-    func confirmSignUp(code: String) async -> Bool {
-        guard let email = pendingConfirmationEmail else { return false }
+    func confirmSignUp(input: String) async -> Bool {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
         error = nil
         do {
-            let session = try await supabase.verifySignupOTP(email: email, token: code)
+            let session: SupabaseSession
+            if trimmed.count == 6, trimmed.allSatisfy(\.isNumber), let email = pendingConfirmationEmail {
+                session = try await supabase.verifySignupOTP(email: email, token: trimmed)
+            } else {
+                session = try await supabase.verifySignupTokenHash(Self.extractTokenHash(from: trimmed))
+            }
             await MainActor.run {
                 self.pendingConfirmationEmail = nil
                 self.apply(session)
@@ -215,6 +225,16 @@ final class AuthService {
     }
 
     // MARK: - Private
+
+    // Pastes may be the full link (…/verify?token=abc123&type=signup&…) or
+    // just the token value on its own — handle both.
+    private static func extractTokenHash(from pasted: String) -> String {
+        if let components = URLComponents(string: pasted),
+           let token = components.queryItems?.first(where: { $0.name == "token" || $0.name == "token_hash" })?.value {
+            return token
+        }
+        return pasted
+    }
 
     private func apply(_ session: SupabaseSession) {
         self.currentSession = session

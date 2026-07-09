@@ -74,6 +74,17 @@ final class SupabaseService {
         return try await post(url: url, body: ["type": "signup", "email": email, "token": token], requiresAuth: false)
     }
 
+    // Verifies using the token already embedded in the default (unmodified)
+    // confirmation email's link — no custom SMTP/template edit required, and
+    // no email lookup needed since the hash alone identifies the pending
+    // signup. Crucially this is a POST, so the link is never actually
+    // visited/loaded — sidesteps mail clients/security scanners that
+    // silently pre-fetch (and thereby consume) tappable links.
+    func verifySignupTokenHash(_ tokenHash: String) async throws -> SupabaseSession {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/verify")!
+        return try await post(url: url, body: ["type": "signup", "token_hash": tokenHash], requiresAuth: false)
+    }
+
     func resendSignupConfirmation(email: String) async throws {
         let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/resend")!
         var request = URLRequest(url: url)

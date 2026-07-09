@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct OnboardingView: View {
     var authService: AuthService
@@ -151,11 +152,11 @@ private struct ConfirmCodeView: View {
     var authService: AuthService
     var email: String
 
-    @State private var code = ""
+    @State private var pastedInput = ""
     @State private var isVerifying = false
     @State private var resendMessage: String?
 
-    private var canSubmit: Bool { code.count == 6 && !isVerifying }
+    private var canSubmit: Bool { !pastedInput.trimmingCharacters(in: .whitespaces).isEmpty && !isVerifying }
 
     var body: some View {
         ZStack {
@@ -171,30 +172,48 @@ private struct ConfirmCodeView: View {
                     Text("Check your email")
                         .font(.system(size: 28, weight: .bold, design: .serif))
                         .foregroundStyle(BrewTheme.Color.textPrimary)
-                    Text("Enter the 6-digit code we sent to\n\(email)")
+                    Text("We sent a confirmation link to\n\(email)")
                         .font(BrewTheme.Font.callout)
                         .foregroundStyle(BrewTheme.Color.textSecondary)
                         .multilineTextAlignment(.center)
                 }
 
+                VStack(alignment: .leading, spacing: BrewTheme.Spacing.xs) {
+                    // Long-press the link and Copy — don't tap it. Tapping opens
+                    // a browser tab that can't hand off into the app right now;
+                    // pasting it here verifies it directly instead.
+                    Label("Long-press \"Confirm email address\" in that email and tap Copy — don't open it", systemImage: "doc.on.clipboard")
+                        .font(BrewTheme.Font.caption)
+                        .foregroundStyle(BrewTheme.Color.textSecondary)
+                }
+                .padding(.horizontal, BrewTheme.Spacing.md)
+
                 VStack(spacing: BrewTheme.Spacing.md) {
-                    TextField("000000", text: $code)
-                        .keyboardType(.numberPad)
-                        .textContentType(.oneTimeCode)
-                        .multilineTextAlignment(.center)
-                        .font(.system(size: 32, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(.black)
-                        .padding(BrewTheme.Spacing.sm)
-                        .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.small))
-                        .onChange(of: code) { _, newValue in
-                            code = String(newValue.filter(\.isNumber).prefix(6))
+                    HStack(spacing: BrewTheme.Spacing.xs) {
+                        TextField("Paste the confirmation link here", text: $pastedInput)
+                            .textContentType(.URL)
+                            .keyboardType(.URL)
+                            .autocapitalization(.none)
+                            .autocorrectionDisabled()
+                            .foregroundStyle(.black)
+                            .padding(BrewTheme.Spacing.sm)
+                            .background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.small))
+
+                        Button {
+                            if let clip = UIPasteboard.general.string {
+                                pastedInput = clip
+                            }
+                        } label: {
+                            Image(systemName: "doc.on.clipboard.fill")
+                                .foregroundStyle(BrewTheme.Color.accent)
                         }
+                    }
 
                     BrewPrimaryButton("Confirm", isDisabled: !canSubmit) {
                         Task {
                             isVerifying = true
-                            await authService.confirmSignUp(code: code)
+                            await authService.confirmSignUp(input: pastedInput)
                             isVerifying = false
                         }
                     }
@@ -215,10 +234,10 @@ private struct ConfirmCodeView: View {
                     Button {
                         Task {
                             await authService.resendConfirmationCode()
-                            resendMessage = "New code sent."
+                            resendMessage = "New email sent."
                         }
                     } label: {
-                        Text("Resend code")
+                        Text("Resend email")
                             .font(BrewTheme.Font.caption)
                             .foregroundStyle(BrewTheme.Color.accent)
                     }
