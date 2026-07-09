@@ -7,6 +7,9 @@ final class AuthService {
     private(set) var currentSession: SupabaseSession?
     private(set) var error: String?
     private(set) var resetPasswordMessage: String?
+    // Non-nil while waiting for the user to type the 6-digit code we just
+    // emailed them. The UI shows a code-entry screen for as long as this is set.
+    private(set) var pendingConfirmationEmail: String?
 
     // Exposed so AppStore can be configured for sync once a session exists.
     let supabase = SupabaseService()
@@ -27,9 +30,65 @@ final class AuthService {
     }
 
     func signUpWithEmail(email: String, password: String) async {
-        await perform {
-            try await self.supabase.signUpWithEmail(email: email, password: password)
+        error = nil
+        do {
+            let session = try await supabase.signUpWithEmail(email: email, password: password)
+            await MainActor.run { self.apply(session) }
+        } catch let e as SupabaseService.SupabaseError {
+            await MainActor.run {
+                switch e {
+                case .confirmationRequired:
+                    // Expected path when "Confirm email" is on: hand off to
+                    // the code-entry screen instead of surfacing this as an error.
+                    self.pendingConfirmationEmail = email
+                case .notConfigured:
+                    self.bypassForDemo()
+                default:
+                    self.error = e.errorDescription
+                }
+            }
+        } catch {
+            await MainActor.run { self.error = error.localizedDescription }
         }
+    }
+
+    // MARK: - Signup Confirmation Code
+    // Typed 6-digit code instead of a tappable magic link — the code sits as
+    // plain text in the email body, so mail apps/security scanners that
+    // pre-fetch links (silently burning single-use tokens before the human
+    // taps them) can't consume it. Also sidesteps needing any redirect_to
+    // URL allow-listed in the Supabase dashboard.
+
+    @discardableResult
+    func confirmSignUp(code: String) async -> Bool {
+        guard let email = pendingConfirmationEmail else { return false }
+        error = nil
+        do {
+            let session = try await supabase.verifySignupOTP(email: email, token: code)
+            await MainActor.run {
+                self.pendingConfirmationEmail = nil
+                self.apply(session)
+            }
+            return true
+        } catch let e as SupabaseService.SupabaseError {
+            await MainActor.run { self.error = e.errorDescription }
+            return false
+        } catch {
+            await MainActor.run { self.error = error.localizedDescription }
+            return false
+        }
+    }
+
+    func resendConfirmationCode() async {
+        guard let email = pendingConfirmationEmail else { return }
+        error = nil
+        try? await supabase.resendSignupConfirmation(email: email)
+    }
+
+    // Lets the user back out to the email/password screen (e.g. to fix a typo'd address).
+    func cancelPendingConfirmation() {
+        pendingConfirmationEmail = nil
+        error = nil
     }
 
     func sendPasswordReset(email: String) async {

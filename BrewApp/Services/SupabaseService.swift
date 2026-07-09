@@ -65,6 +65,26 @@ final class SupabaseService {
         return try JSONDecoder.supabase.decode(SupabaseSession.self, from: data)
     }
 
+    // Verifies the 6-digit code from the confirmation email (plain text in
+    // the email body — POST body here too, never a URL). Immune to the
+    // magic-link problem where mail apps/security scanners pre-fetch and
+    // silently burn the single-use link before the user taps it.
+    func verifySignupOTP(email: String, token: String) async throws -> SupabaseSession {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/verify")!
+        return try await post(url: url, body: ["type": "signup", "email": email, "token": token], requiresAuth: false)
+    }
+
+    func resendSignupConfirmation(email: String) async throws {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/resend")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["type": "signup", "email": email])
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validate(response: response, data: data)
+    }
+
     // Triggers Supabase's built-in "reset password" email, which contains a
     // link back into the app to set a new password. Supabase returns 200
     // with an empty body regardless of whether the email exists, so callers
