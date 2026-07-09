@@ -47,6 +47,41 @@ final class AuthService {
         }
     }
 
+    // MARK: - Email Confirmation Deep Link
+
+    // Supabase's confirmation link verifies the email server-side, then
+    // redirects the OS to redirect_to (brew://confirmed) with the new
+    // session appended as a URL fragment: #access_token=...&refresh_token=...
+    // Returns true if it found and applied a session (caller can then skip
+    // any other deep-link handling for this URL).
+    @discardableResult
+    func handleEmailConfirmation(url: URL) async -> Bool {
+        guard url.scheme == "brew", url.host == "confirmed" else { return false }
+
+        let fragment = URLComponents(url: url, resolvingAgainstBaseURL: false)?.fragment ?? ""
+        var params: [String: String] = [:]
+        for pair in fragment.split(separator: "&") {
+            let kv = pair.split(separator: "=", maxSplits: 1).map(String.init)
+            if kv.count == 2 { params[kv[0]] = kv[1].removingPercentEncoding ?? kv[1] }
+        }
+
+        guard let accessToken = params["access_token"], let refreshToken = params["refresh_token"] else {
+            // Link was opened without tokens (e.g. already confirmed/expired) —
+            // not an error state worth surfacing, just nothing to apply.
+            return false
+        }
+
+        do {
+            let userID = try await supabase.fetchUserID(accessToken: accessToken)
+            let session = SupabaseSession(accessToken: accessToken, refreshToken: refreshToken, user: .init(id: userID))
+            await MainActor.run { self.apply(session) }
+            return true
+        } catch {
+            await MainActor.run { self.error = "Email confirmed, but sign-in failed — please sign in manually." }
+            return false
+        }
+    }
+
     // MARK: - Session Restore & Refresh
 
     // Called on cold launch: if a refresh token is stored, exchange it for a

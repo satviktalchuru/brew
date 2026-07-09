@@ -59,7 +59,16 @@ struct BrewApp: App {
                 if !isAuth { store.teardownSync() }
             }
             .onOpenURL { url in
-                store.pendingDeepLink = DeepLink(url: url)
+                Task {
+                    // Email confirmation links carry a session in the URL
+                    // fragment (brew://confirmed#access_token=...) — try that
+                    // first; only fall through to content deep links if this
+                    // wasn't one.
+                    let handled = await authService.handleEmailConfirmation(url: url)
+                    if !handled {
+                        store.pendingDeepLink = DeepLink(url: url)
+                    }
+                }
             }
             .preferredColorScheme(.light)
         }

@@ -39,7 +39,13 @@ final class SupabaseService {
     }
 
     func signUpWithEmail(email: String, password: String) async throws -> SupabaseSession {
-        let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/signup")!
+        // Without an explicit redirect_to, Supabase falls back to the
+        // dashboard's "Site URL" — which for this project is still pointing
+        // at an unrelated http://localhost:3000, so the confirmation link
+        // opened a dead browser tab instead of the app. brew:// is this
+        // app's own registered URL scheme (see CFBundleURLTypes), so this
+        // makes the confirmation link hand off straight back into Brew.
+        let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/signup?redirect_to=brew://confirmed")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -93,6 +99,20 @@ final class SupabaseService {
         req.httpBody = try JSONSerialization.data(withJSONObject: [String: String]())
         let (data, response) = try await URLSession.shared.data(for: req)
         try validate(response: response, data: data)
+    }
+
+    // Used to resolve the user id after a redirect hands the app raw
+    // access/refresh tokens (email confirmation) but no id — the fragment
+    // Supabase appends to redirect_to carries tokens only, not the id.
+    func fetchUserID(accessToken: String) async throws -> String {
+        let url = URL(string: "\(SupabaseConfig.projectURL)/auth/v1/user")!
+        var request = URLRequest(url: url)
+        request.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validate(response: response, data: data)
+        struct UserResponse: Decodable { let id: String }
+        return try JSONDecoder().decode(UserResponse.self, from: data).id
     }
 
     // MARK: - Profiles
