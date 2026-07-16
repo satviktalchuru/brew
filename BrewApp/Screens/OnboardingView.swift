@@ -172,17 +172,17 @@ private struct ConfirmCodeView: View {
                     Text("Check your email")
                         .font(.system(size: 28, weight: .bold, design: .serif))
                         .foregroundStyle(BrewTheme.Color.textPrimary)
-                    Text("We sent a confirmation link to\n\(email)")
+                    Text("We sent a code (and a link) to\n\(email)")
                         .font(BrewTheme.Font.callout)
                         .foregroundStyle(BrewTheme.Color.textSecondary)
                         .multilineTextAlignment(.center)
                 }
 
                 VStack(alignment: .leading, spacing: BrewTheme.Spacing.xs) {
-                    // Long-press the link and Copy — don't tap it. Tapping opens
-                    // a browser tab that can't hand off into the app right now;
-                    // pasting it here verifies it directly instead.
-                    Label("Long-press \"Confirm email address\" in that email and tap Copy — don't open it", systemImage: "doc.on.clipboard")
+                    // Two ways in, same field: type the 6-digit code shown in
+                    // the email, or long-press "Confirm email address" → Copy
+                    // (don't tap it) and paste the link instead.
+                    Label("Type the 6-digit code from the email — or long-press the link and Copy (don't open it), then paste it here", systemImage: "envelope.open")
                         .font(BrewTheme.Font.caption)
                         .foregroundStyle(BrewTheme.Color.textSecondary)
                 }
@@ -190,9 +190,9 @@ private struct ConfirmCodeView: View {
 
                 VStack(spacing: BrewTheme.Spacing.md) {
                     HStack(spacing: BrewTheme.Spacing.xs) {
-                        TextField("Paste the confirmation link here", text: $pastedInput)
-                            .textContentType(.URL)
-                            .keyboardType(.URL)
+                        TextField("Code or pasted link", text: $pastedInput)
+                            .textContentType(.oneTimeCode)
+                            .keyboardType(.default)
                             .autocapitalization(.none)
                             .autocorrectionDisabled()
                             .foregroundStyle(.black)

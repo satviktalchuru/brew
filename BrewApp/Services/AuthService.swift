@@ -48,7 +48,7 @@ final class AuthService {
                 }
             }
         } catch {
-            await MainActor.run { self.error = error.localizedDescription }
+            await MainActor.run { self.error = Self.message(for: error) }
         }
     }
 
@@ -84,7 +84,7 @@ final class AuthService {
             await MainActor.run { self.error = e.errorDescription }
             return false
         } catch {
-            await MainActor.run { self.error = error.localizedDescription }
+            await MainActor.run { self.error = Self.message(for: error) }
             return false
         }
     }
@@ -112,7 +112,7 @@ final class AuthService {
         } catch let e as SupabaseService.SupabaseError {
             await MainActor.run { self.error = e.errorDescription }
         } catch {
-            await MainActor.run { self.error = error.localizedDescription }
+            await MainActor.run { self.error = Self.message(for: error) }
         }
     }
 
@@ -226,6 +226,25 @@ final class AuthService {
 
     // MARK: - Private
 
+    // Turns any thrown error into something a user can act on. A URLError
+    // here almost always means the backend is unreachable (no connection,
+    // or — as when a free-tier Supabase project is paused — the host doesn't
+    // resolve). Surface that plainly instead of a raw "hostname not found".
+    static func message(for error: Error) -> String {
+        if let e = error as? SupabaseService.SupabaseError { return e.errorDescription ?? "Something went wrong." }
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost, .dataNotAllowed:
+                return "You appear to be offline. Check your connection and try again."
+            case .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed, .timedOut, .badServerResponse:
+                return "Can't reach Brew's servers right now. Please try again in a bit."
+            default:
+                break
+            }
+        }
+        return error.localizedDescription
+    }
+
     // Pastes may be the full link (…/verify?token=abc123&type=signup&…) or
     // just the token value on its own — handle both.
     private static func extractTokenHash(from pasted: String) -> String {
@@ -258,7 +277,7 @@ final class AuthService {
                 }
             }
         } catch {
-            await MainActor.run { self.error = error.localizedDescription }
+            await MainActor.run { self.error = Self.message(for: error) }
         }
     }
 }
