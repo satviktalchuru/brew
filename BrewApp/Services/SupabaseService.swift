@@ -18,6 +18,8 @@ final class SupabaseService {
         // Sign-up succeeded but Supabase's "Confirm email" setting is on, so no
         // session was issued yet — the user must click the link in their inbox.
         case confirmationRequired
+        // Sign-up attempted with an email that already has an account.
+        case emailAlreadyRegistered
 
         var errorDescription: String? {
             switch self {
@@ -27,6 +29,8 @@ final class SupabaseService {
                 return "HTTP \(code): \(message)"
             case .confirmationRequired:
                 return "Check your email to confirm your account before signing in."
+            case .emailAlreadyRegistered:
+                return "There's already an account with this email. Try signing in instead."
             }
         }
     }
@@ -52,6 +56,17 @@ final class SupabaseService {
         request.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
         request.httpBody = try JSONSerialization.data(withJSONObject: ["email": email, "password": password])
         let (data, response) = try await URLSession.shared.data(for: request)
+
+        // Duplicate email: Supabase returns 422 user_already_exists (or 400
+        // email_exists). Surface a friendly message instead of a raw HTTP code.
+        if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            let code = obj["error_code"] as? String
+            let msg = (obj["msg"] as? String)?.lowercased() ?? ""
+            if code == "user_already_exists" || code == "email_exists" || msg.contains("already registered") {
+                throw SupabaseError.emailAlreadyRegistered
+            }
+        }
+
         try validate(response: response, data: data)
 
         // If "Confirm email" is enabled in the Supabase dashboard, signup

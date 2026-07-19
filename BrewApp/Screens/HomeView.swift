@@ -2,10 +2,20 @@ import SwiftUI
 
 struct HomeView: View {
     var store: AppStore
+    var onLogDrink: () -> Void = {}
+    var onAddFriends: () -> Void = {}
+    var onCompare: () -> Void = {}
     @State private var showActivity = false
     @State private var scrollToTopTrigger = 0
+    @State private var showCompareHint = false
 
     private var activityCount: Int { store.activityEvents.count }
+
+    // Need at least two of your own drinks before head-to-head comparison
+    // is meaningful.
+    private var myLogCount: Int {
+        store.drinkLogs.filter { $0.userID == store.currentUserID }.count
+    }
 
     var body: some View {
         NavigationStack {
@@ -131,28 +141,41 @@ struct HomeView: View {
                 VStack(spacing: BrewTheme.Spacing.sm) {
                     HStack(spacing: BrewTheme.Spacing.sm) {
                         ctaCard(icon: "plus.circle.fill", title: "Log a Drink",
-                                detail: "Start building\nyour taste profile", accent: true)
+                                detail: "Start building\nyour taste profile", accent: true,
+                                action: onLogDrink)
                         ctaCard(icon: "person.badge.plus.fill", title: "Add Friends",
-                                detail: "See what they're\nordering", accent: false)
+                                detail: "See what they're\nordering", accent: false,
+                                action: onAddFriends)
                     }
                     .padding(.horizontal, BrewTheme.Spacing.sm)
 
-                    BrewCard {
-                        HStack(spacing: BrewTheme.Spacing.sm) {
-                            Image(systemName: "arrow.left.arrow.right")
-                                .font(.title3)
-                                .foregroundStyle(BrewTheme.Color.accent)
-                                .frame(width: 32)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Compare to rank")
-                                    .font(BrewTheme.Font.bodySemibold)
-                                    .foregroundStyle(BrewTheme.Color.textPrimary)
-                                Text("Head-to-head picks build your ELO-ranked list automatically")
-                                    .font(BrewTheme.Font.caption)
-                                    .foregroundStyle(BrewTheme.Color.textSecondary)
+                    Button {
+                        if myLogCount >= 2 {
+                            onCompare()
+                        } else {
+                            showCompareHint = true
+                        }
+                    } label: {
+                        BrewCard {
+                            HStack(spacing: BrewTheme.Spacing.sm) {
+                                Image(systemName: "arrow.left.arrow.right")
+                                    .font(.title3)
+                                    .foregroundStyle(BrewTheme.Color.accent)
+                                    .frame(width: 32)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Compare to rank")
+                                        .font(BrewTheme.Font.bodySemibold)
+                                        .foregroundStyle(BrewTheme.Color.textPrimary)
+                                    Text("Head-to-head picks build your ELO-ranked list automatically")
+                                        .font(BrewTheme.Font.caption)
+                                        .foregroundStyle(BrewTheme.Color.textSecondary)
+                                        .multilineTextAlignment(.leading)
+                                }
+                                Spacer(minLength: 0)
                             }
                         }
                     }
+                    .buttonStyle(.plain)
                     .padding(.horizontal, BrewTheme.Spacing.sm)
                 }
                 .padding(.bottom, BrewTheme.Spacing.xl)
@@ -176,27 +199,36 @@ struct HomeView: View {
             }
         }
         .navigationDestination(for: DrinkLog.self) { log in DrinkDetailView(store: store, log: log) }
+        .alert("Log a few drinks first", isPresented: $showCompareHint) {
+            Button("Got it", role: .cancel) {}
+        } message: {
+            Text("You need to log at least a couple of coffees before you can compare and rank them. Tap “Log a Drink” to get started.")
+        }
     }
 
-    private func ctaCard(icon: String, title: String, detail: String, accent: Bool) -> some View {
-        BrewCard {
-            VStack(alignment: .leading, spacing: BrewTheme.Spacing.xs) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundStyle(accent ? .white : BrewTheme.Color.accent)
-                    .frame(width: 44, height: 44)
-                    .background(accent ? BrewTheme.Color.accent : BrewTheme.Color.accentLight)
-                    .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.small, style: .continuous))
-                Text(title)
-                    .font(BrewTheme.Font.bodySemibold)
-                    .foregroundStyle(BrewTheme.Color.textPrimary)
-                Text(detail)
-                    .font(BrewTheme.Font.caption)
-                    .foregroundStyle(BrewTheme.Color.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+    private func ctaCard(icon: String, title: String, detail: String, accent: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            BrewCard {
+                VStack(alignment: .leading, spacing: BrewTheme.Spacing.xs) {
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .foregroundStyle(accent ? .white : BrewTheme.Color.accent)
+                        .frame(width: 44, height: 44)
+                        .background(accent ? BrewTheme.Color.accent : BrewTheme.Color.accentLight)
+                        .clipShape(RoundedRectangle(cornerRadius: BrewTheme.Radius.small, style: .continuous))
+                    Text(title)
+                        .font(BrewTheme.Font.bodySemibold)
+                        .foregroundStyle(BrewTheme.Color.textPrimary)
+                    Text(detail)
+                        .font(BrewTheme.Font.caption)
+                        .foregroundStyle(BrewTheme.Color.textSecondary)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
             }
-            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
+        .buttonStyle(.plain)
     }
 
     private func trendingPill(_ log: DrinkLog) -> some View {

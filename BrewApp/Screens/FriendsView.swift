@@ -2,7 +2,7 @@ import SwiftUI
 
 struct FriendsView: View {
     var store: AppStore
-    @State private var showAddFriends = false
+    @Binding var showAddFriends: Bool
     @State private var suggestions: [(user: BrewUser, mutualCount: Int)] = []
 
     var body: some View {

@@ -11,6 +11,7 @@ struct RootView: View {
     @State private var rankingLog: DrinkLog? = nil
     @State private var deepLinkShop: Shop? = nil
     @State private var deepLinkLog: DrinkLog? = nil
+    @State private var showAddFriends = false
 
     enum Tab { case home, explore, friends, profile }
 
@@ -22,13 +23,18 @@ struct RootView: View {
             // same as tapping the bar below — "Log" isn't a real screen
             // (it opens a sheet), so it's intentionally not one of the pages.
             TabView(selection: $selectedTab) {
-                HomeView(store: store)
-                    .tag(Tab.home)
+                HomeView(
+                    store: store,
+                    onLogDrink: { showLogSheet = true },
+                    onAddFriends: { goToAddFriends() },
+                    onCompare: { startCompare() }
+                )
+                .tag(Tab.home)
 
                 ExploreView(store: store, tabBarHidden: $tabBarHidden)
                     .tag(Tab.explore)
 
-                FriendsView(store: store)
+                FriendsView(store: store, showAddFriends: $showAddFriends)
                     .tag(Tab.friends)
                     .onAppear { notificationService.clearBadge() }
 
@@ -97,6 +103,24 @@ struct RootView: View {
                 deepLinkLog = store.drinkLogs.first { $0.id == id }
             }
             store.pendingDeepLink = nil
+        }
+    }
+
+    // Switch to the Friends tab, then open its Add Friends sheet. The short
+    // delay lets the tab transition finish so the sheet reliably presents
+    // from the now-visible page.
+    private func goToAddFriends() {
+        withAnimation { selectedTab = .friends }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            showAddFriends = true
+        }
+    }
+
+    private func startCompare() {
+        let pairs = store.candidateComparisonPairs()
+        if !pairs.isEmpty {
+            pendingPairs = pairs
+            showHeadToHead = true
         }
     }
 
