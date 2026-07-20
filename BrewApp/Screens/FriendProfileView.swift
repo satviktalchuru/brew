@@ -35,7 +35,10 @@ struct FriendProfileView: View {
             .padding(.bottom, BrewTheme.Spacing.xl)
         }
         .navigationTitle(user.displayName)
-        .navigationBarTitleDisplayMode(.large)
+        // Inline, not large: a large title clips/shifts left when pushed inside
+        // the paged root TabView's nested NavigationStack. The name already
+        // shows prominently in profileHeader below.
+        .navigationBarTitleDisplayMode(.inline)
         .brewScreenBackground()
         .navigationDestination(for: DrinkLog.self) { log in
             DrinkDetailView(store: store, log: log)

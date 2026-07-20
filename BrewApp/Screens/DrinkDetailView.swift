@@ -29,7 +29,10 @@ struct DrinkDetailView: View {
             .padding(BrewTheme.Spacing.sm)
         }
         .navigationTitle(log.drinkName)
-        .navigationBarTitleDisplayMode(.large)
+        // Inline, not large: a large title clips/shifts left when this view is
+        // pushed inside the paged root TabView's nested NavigationStack. The
+        // drink name already appears prominently in titleBlock below.
+        .navigationBarTitleDisplayMode(.inline)
         .brewScreenBackground()
         .toolbar {
             if isOwn {
