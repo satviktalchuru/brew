@@ -1,136 +1,143 @@
 # Brew
 
-A native iOS app for ranking the coffee you actually drink — Beli-style
-head-to-head comparisons applied to coffee, tea, and home brews instead of
-restaurants.
+Brew is a native iOS app for logging coffee and tea, ranking drinks with
+head-to-head comparisons, and building a personal taste profile over time.
 
-## The Problem
+Instead of star ratings, Brew uses pairwise choices: after logging a drink,
+users can compare it with another drink they have tried. Those comparisons
+feed an Elo-style ranking so the app reflects preference, not just one-off
+satisfaction.
 
-Star ratings don't work for taste. A 4-star latte and a 4-star pour-over
-tell you nothing about which one you'd actually order again. Most coffee
-logging apps (or generic food apps repurposed for coffee) fall back to
-1–5 stars or check-ins, which collapse everything into the same flat scale
-and don't capture *preference* — only satisfaction in the moment.
+## Features
 
-Brew replaces star ratings with **pairwise comparisons**: after logging a
-drink, you're occasionally asked "this or that?" against another drink
-you've had. Over time this builds a personal Elo-based ranking that's far
-more honest than a star average, because it's built from relative
-judgments instead of absolute ones.
-
-## What It Does
-
-- **Log drinks** — brew method, roast, sweetness, strength, notes, and
-  optional shop, whether it's a café order or a home brew.
-- **Head-to-head ranking** — after each log, compare it against past
-  drinks; an Elo rating system (`EloCalculator`) updates both drinks'
-  scores based on the outcome.
-- **Taste profile** — a running picture of your preferences (sweetness,
-  strength, roast leaning) derived from your logs and comparisons
-  (`TasteProfileEngine`), used to power shop/drink recommendations.
-- **Explore** — real coffee shops near you via MapKit (`PlacesService`),
-  with search, filtering by brew method, and trending drinks.
-- **Social** — friends, friend suggestions based on mutual connections,
-  a feed of friends' logs, likes, and in-app "coffee chat" requests to
-  meet up at a shop.
-- **Wishlist** — save drinks or shops you want to try.
-- **Flavor wheel** — visual breakdown of the flavor tags you log most.
-- **Year in Brew** — an annual recap (swipeable cards) of your stats:
-  drinks logged, shops visited, top drink, taste identity.
-- **Safety** — block/report other users, and full account deletion
-  in-app (required for App Store approval when an app supports account
-  creation).
+- Log cafe drinks, tea, espresso, and home brews
+- Rank drinks through head-to-head comparisons
+- Track taste preferences for sweetness, strength, roast, and flavor tags
+- Discover nearby cafes with MapKit
+- Save drinks and shops to a wishlist
+- View friends' activity, likes, suggestions, and coffee chat requests
+- Block/report users and delete an account in app
 
 ## Tech Stack
 
-| Layer | Choice | Why |
-|---|---|---|
-| UI | SwiftUI, iOS 17+ | Native, no cross-platform overhead for a single-platform app |
-| State | `@Observable` (Observation framework) | Simpler than Combine for this app's scale |
-| Backend | [Supabase](https://supabase.com) (Postgres + Auth), called directly via `URLSession` | Free tier, real Postgres, row-level security — no custom backend to run |
-| Auth | Email + password only, plus Sign in with Apple support in the codebase | No Google/third-party OAuth — kept deliberately simple; Apple Sign-In alongside email keeps App Store Guideline 4.8 satisfied if third-party login is ever reintroduced |
-| Location / Places | Apple `MapKit` (`MKLocalSearch`) | Free, no API key, no billing account — used instead of Google Places |
-| Project generation | [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`project.yml`) | The `.xcodeproj` is generated, not hand-maintained — run `xcodegen generate` after changing `project.yml` or adding new files |
+- **UI:** SwiftUI, iOS 17+
+- **State:** Observation framework (`@Observable`)
+- **Backend:** Supabase Auth, Postgres, Storage, and Row Level Security
+- **Networking:** `URLSession` against Supabase REST/Auth APIs
+- **Location/Places:** MapKit and CoreLocation
+- **Project generation:** XcodeGen via `project.yml`
 
-No third-party SDKs beyond Apple's own frameworks (CoreLocation, MapKit,
-UserNotifications, AuthenticationServices) and Supabase's REST API — no
-analytics, ads, or crash reporting SDKs.
+The app does not use analytics, ads, or third-party iOS SDKs.
 
-## Project Structure
+## Requirements
 
-```
-BrewApp/
-├── App/            App entry point, root navigation/tab structure
-├── Screens/        One SwiftUI view per screen (Explore, Onboarding, etc.)
-├── Services/        Auth, Supabase REST client, location, places search,
-│                     notifications, keychain
-├── Data/           AppStore (single source of truth, @Observable) + its
-│                     Supabase sync extension + offline write queue
-├── Logic/          Elo ranking, taste profile, recommendations
-├── Models/         Shared data types (Shop, DrinkLog, BrewUser, ...)
-├── DesignSystem/   Theme tokens (BrewTheme) and shared components
-└── Assets.xcassets App icon, launch screen assets, color sets
-```
+- Xcode with an iOS 17+ simulator/runtime
+- XcodeGen
+- A Supabase project
+- An Apple Developer team for device/App Store builds
 
-## Backend Setup (Supabase)
-
-The SQL files in `supabase/` are meant to be run in order, in the
-Supabase Dashboard → SQL Editor:
-
-1. `supabase/supabase_schema.sql` — core tables (profiles, drink_logs, friendships,
-   chat_requests, likes) and the `handle_new_user()` trigger that creates
-   a `profiles` row on signup.
-2. `supabase/supabase_shops.sql` — shared shops table (real-world cafes discovered
-   via MapKit get upserted here so friends can resolve shop names).
-3. `supabase/supabase_wishlist.sql` — wishlist table.
-4. `supabase/supabase_suggested_friends.sql` — friend-of-friend suggestion query.
-5. `supabase/supabase_app_store_compliance.sql` — `blocked_users`, `reports`, and
-   the `delete_own_account()` RPC (Apple Guideline 5.1.1(v) requires
-   in-app account deletion for any app that supports account creation).
-6. `supabase/supabase_hardening.sql` — additional check constraints (string
-   length limits, username format, etc.) layered on after the fact.
-7. `supabase/supabase_fix_signup_trigger.sql` — **run this after `supabase/supabase_hardening.sql`**.
-   The original `handle_new_user()` trigger derives usernames directly
-   from the email's local part (e.g. `"John.Doe"` from
-   `John.Doe@gmail.com`), but the hardening migration's
-   `profiles_username_fmt` constraint requires lowercase
-   alphanumeric/underscore only. Without this fix, sign-up fails for
-   most real email addresses with a generic `"Database error saving new
-   user"` (HTTP 500) — this file normalizes/sanitizes the derived
-   username so it always satisfies the constraint.
-8. `supabase/supabase_avatar_storage.sql` — avatar storage bucket,
-   `profiles.avatar_url`, and the avatar-aware `suggested_friends()` RPC.
-
-The Supabase project URL and anon key live in
-`BrewApp/Services/SupabaseService.swift` (`SupabaseConfig`). The anon key
-is safe to ship client-side — row-level security policies on every table
-are what actually gate access, not the key.
-
-## Running Locally
+Install XcodeGen if needed:
 
 ```bash
-xcodegen generate      # regenerates Brew.xcodeproj from project.yml
-open Brew.xcodeproj
+brew install xcodegen
 ```
 
-Requires a full Xcode install (not just Command Line Tools) to build and
-run on a simulator or device.
+## Local Setup
+
+1. Generate the Xcode project:
+
+   ```bash
+   xcodegen generate --spec project.yml
+   ```
+
+2. Open the project:
+
+   ```bash
+   open Brew.xcodeproj
+   ```
+
+3. Select your Apple Development Team in Xcode if building for a device.
+
+4. Run `BrewApp` on a simulator or device.
+
+For simulator-only builds, signing can be disabled from the command line:
+
+```bash
+xcodebuild \
+  -project Brew.xcodeproj \
+  -scheme BrewApp \
+  -destination 'platform=iOS Simulator,name=iPhone 15' \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+```
+
+## Supabase Setup
+
+Run the SQL files in `supabase/` in this order from the Supabase Dashboard
+SQL Editor:
+
+1. `supabase/supabase_schema.sql`
+2. `supabase/supabase_shops.sql`
+3. `supabase/supabase_wishlist.sql`
+4. `supabase/supabase_suggested_friends.sql`
+5. `supabase/supabase_app_store_compliance.sql`
+6. `supabase/supabase_hardening.sql`
+7. `supabase/supabase_fix_signup_trigger.sql`
+8. `supabase/supabase_avatar_storage.sql`
+
+Then configure Supabase Auth:
+
+- Enable email/password auth.
+- Add `brew://confirmed` to allowed redirect URLs if email confirmation is enabled.
+- Confirm the public Data API can access the `public` schema tables used by the app.
+
+The app's Supabase URL and anon key are currently defined in
+`BrewApp/Services/SupabaseService.swift` (`SupabaseConfig`). The anon key is
+safe to ship in an iOS client when Row Level Security policies are correct.
+
+## Project Layout
+
+```text
+BrewApp/
+  App/              App entry point and root navigation
+  Data/             AppStore, remote mapping, sync, offline write queue
+  DesignSystem/     Theme and reusable UI components
+  Logic/            Ranking, Elo, recommendations, taste profile
+  Models/           Shared app models
+  Screens/          SwiftUI screens
+  Services/         Auth, Supabase, location, places, notifications, keychain
+  Assets.xcassets   App icon and launch assets
+
+BrewAppTests/       Unit and smoke tests
+docs/               GitHub Pages privacy page
+supabase/           Backend setup SQL scripts
+project.yml         XcodeGen project definition
+```
 
 ## Demo Mode
 
-The sign-in screen has a "Demo Mode" button that bypasses auth entirely
-and runs on locally seeded mock data (`MockData.swift`) — useful for UI
-work or screenshots without touching the real backend. Signing in with a
-real account clears all seeded mock data (shops, users, comparisons) so
-it never leaks into a real session.
+The sign-in screen includes a Demo Mode button. Demo Mode bypasses Supabase
+and uses local seeded data from `MockData.swift`, which is useful for UI work
+and screenshots.
 
-## Privacy & App Store
+Signing in with a real account clears seeded demo users, shops, and
+comparisons so demo content does not leak into a synced account.
 
-- Privacy policy: hosted as a static page (see `docs/privacy.html`);
-  the live URL is set in `SettingsView.swift` (`privacyPolicyURL`).
-- `BrewApp/PrivacyInfo.xcprivacy` declares the data types actually
-  collected (email, user ID, user-generated content) per Apple's privacy
-  manifest requirements.
-- No location data is ever transmitted to the backend — `LocationService`
-  keeps the device's coordinate in memory only, used purely to compute
-  on-device distances and to center MapKit shop searches.
+## Privacy and App Store Notes
+
+- Privacy policy page: `docs/privacy.html`
+- Live privacy URL used by the app:
+  `https://satviktalchuru.github.io/brew/privacy.html`
+- Privacy manifest: `BrewApp/PrivacyInfo.xcprivacy`
+- Account deletion is available in Settings.
+- Block/report flows are included for social features.
+- Location is used for nearby shop search and distance calculations. The app
+  does not intentionally store device coordinates in the backend.
+
+## Developer Notes
+
+- `Brew.xcodeproj` can be regenerated from `project.yml`.
+- Do not commit Xcode user data, provisioning profiles, archives, local env
+  files, or personal signing settings.
+- If App Store Connect rejects a build for signing or capabilities, fix that
+  in Xcode locally and keep reusable project settings in `project.yml`.
