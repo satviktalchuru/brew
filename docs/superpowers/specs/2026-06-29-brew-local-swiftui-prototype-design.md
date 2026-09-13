@@ -5,7 +5,7 @@ Status: Approved for planning
 
 ## Goal
 
-Build a real SwiftUI iOS prototype of Brew in `/Users/satviktalchuru/ranking-app`. The prototype should make the product feel tangible before backend and location integrations are added. It uses native SwiftUI, local mock data, and production-shaped boundaries for future Supabase, Google Places, MapKit, auth, and push notification work.
+Build a real SwiftUI iOS prototype of Brew in this repository. The prototype should make the product feel tangible before backend and location integrations are added. It uses native SwiftUI, local mock data, and production-shaped boundaries for future Supabase, Google Places, MapKit, auth, and push notification work.
 
 ## Scope
 
