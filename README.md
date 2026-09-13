@@ -123,31 +123,3 @@ docs/               GitHub Pages privacy page
 supabase/           Backend setup SQL scripts
 project.yml         XcodeGen project definition
 ```
-
-## Demo Mode
-
-The sign-in screen includes a Demo Mode button. Demo Mode bypasses Supabase
-and uses local seeded data from `MockData.swift`, which is useful for UI work
-and screenshots.
-
-Signing in with a real account clears seeded demo users, shops, and
-comparisons so demo content does not leak into a synced account.
-
-## Privacy and App Store Notes
-
-- Privacy policy page: `docs/privacy.html`
-- Live privacy URL used by the app:
-  `https://satviktalchuru.github.io/brew/privacy.html`
-- Privacy manifest: `BrewApp/PrivacyInfo.xcprivacy`
-- Account deletion is available in Settings.
-- Block/report flows are included for social features.
-- Location is used for nearby shop search and distance calculations. The app
-  does not intentionally store device coordinates in the backend.
-
-## Developer Notes
-
-- `Brew.xcodeproj` can be regenerated from `project.yml`.
-- Do not commit Xcode user data, provisioning profiles, archives, local env
-  files, or personal signing settings.
-- If App Store Connect rejects a build for signing or capabilities, fix that
-  in Xcode locally and keep reusable project settings in `project.yml`.
