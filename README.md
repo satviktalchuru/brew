@@ -74,22 +74,22 @@ BrewApp/
 
 ## Backend Setup (Supabase)
 
-The SQL files at the repo root are meant to be run in order, in the
+The SQL files in `supabase/` are meant to be run in order, in the
 Supabase Dashboard → SQL Editor:
 
-1. `supabase_schema.sql` — core tables (profiles, drink_logs, friendships,
+1. `supabase/supabase_schema.sql` — core tables (profiles, drink_logs, friendships,
    chat_requests, likes) and the `handle_new_user()` trigger that creates
    a `profiles` row on signup.
-2. `supabase_shops.sql` — shared shops table (real-world cafes discovered
+2. `supabase/supabase_shops.sql` — shared shops table (real-world cafes discovered
    via MapKit get upserted here so friends can resolve shop names).
-3. `supabase_wishlist.sql` — wishlist table.
-4. `supabase_suggested_friends.sql` — friend-of-friend suggestion query.
-5. `supabase_app_store_compliance.sql` — `blocked_users`, `reports`, and
+3. `supabase/supabase_wishlist.sql` — wishlist table.
+4. `supabase/supabase_suggested_friends.sql` — friend-of-friend suggestion query.
+5. `supabase/supabase_app_store_compliance.sql` — `blocked_users`, `reports`, and
    the `delete_own_account()` RPC (Apple Guideline 5.1.1(v) requires
    in-app account deletion for any app that supports account creation).
-6. `supabase_hardening.sql` — additional check constraints (string
+6. `supabase/supabase_hardening.sql` — additional check constraints (string
    length limits, username format, etc.) layered on after the fact.
-7. `supabase_fix_signup_trigger.sql` — **run this after `supabase_hardening.sql`**.
+7. `supabase/supabase_fix_signup_trigger.sql` — **run this after `supabase/supabase_hardening.sql`**.
    The original `handle_new_user()` trigger derives usernames directly
    from the email's local part (e.g. `"John.Doe"` from
    `John.Doe@gmail.com`), but the hardening migration's
@@ -98,6 +98,8 @@ Supabase Dashboard → SQL Editor:
    most real email addresses with a generic `"Database error saving new
    user"` (HTTP 500) — this file normalizes/sanitizes the derived
    username so it always satisfies the constraint.
+8. `supabase/supabase_avatar_storage.sql` — avatar storage bucket,
+   `profiles.avatar_url`, and the avatar-aware `suggested_friends()` RPC.
 
 The Supabase project URL and anon key live in
 `BrewApp/Services/SupabaseService.swift` (`SupabaseConfig`). The anon key
