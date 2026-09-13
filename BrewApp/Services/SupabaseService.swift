@@ -26,6 +26,13 @@ final class SupabaseService {
             case .notConfigured:
                 return "Supabase credentials not configured."
             case .httpError(let code, let message):
+                let lowercasedMessage = message.lowercased()
+                if code == 400 && (
+                    lowercasedMessage.contains("invalid_credentials") ||
+                    lowercasedMessage.contains("invalid login credentials")
+                ) {
+                    return "Invalid email or password."
+                }
                 return "HTTP \(code): \(message)"
             case .confirmationRequired:
                 return "Check your email to confirm your account before signing in."

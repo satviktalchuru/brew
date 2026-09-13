@@ -87,7 +87,7 @@ struct OnboardingView: View {
                         }
 
                         if let error = authService.error {
-                            Text(error)
+                            Text(displayMessage(for: error))
                                 .font(BrewTheme.Font.caption)
                                 .foregroundStyle(.red)
                                 .multilineTextAlignment(.center)
@@ -139,6 +139,15 @@ struct OnboardingView: View {
         } message: {
             Text("We'll email you a link to set a new password.")
         }
+    }
+
+    private func displayMessage(for error: String) -> String {
+        let lowercased = error.lowercased()
+        if lowercased.contains("invalid_credentials") ||
+            lowercased.contains("invalid login credentials") {
+            return "Invalid email or password."
+        }
+        return error
     }
 }
 

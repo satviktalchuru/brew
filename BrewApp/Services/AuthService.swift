@@ -44,7 +44,7 @@ final class AuthService {
                 case .notConfigured:
                     self.bypassForDemo()
                 default:
-                    self.error = e.errorDescription
+                    self.error = Self.message(for: e)
                 }
             }
         } catch {
@@ -81,7 +81,7 @@ final class AuthService {
             }
             return true
         } catch let e as SupabaseService.SupabaseError {
-            await MainActor.run { self.error = e.errorDescription }
+            await MainActor.run { self.error = Self.message(for: e) }
             return false
         } catch {
             await MainActor.run { self.error = Self.message(for: error) }
@@ -110,7 +110,7 @@ final class AuthService {
                 self.resetPasswordMessage = "If that email has an account, a reset link is on its way."
             }
         } catch let e as SupabaseService.SupabaseError {
-            await MainActor.run { self.error = e.errorDescription }
+            await MainActor.run { self.error = Self.message(for: e) }
         } catch {
             await MainActor.run { self.error = Self.message(for: error) }
         }
@@ -231,7 +231,18 @@ final class AuthService {
     // or — as when a free-tier Supabase project is paused — the host doesn't
     // resolve). Surface that plainly instead of a raw "hostname not found".
     static func message(for error: Error) -> String {
-        if let e = error as? SupabaseService.SupabaseError { return e.errorDescription ?? "Something went wrong." }
+        if let e = error as? SupabaseService.SupabaseError {
+            if case .httpError(let code, let message) = e {
+                let lowercasedMessage = message.lowercased()
+                if code == 400 && (
+                    lowercasedMessage.contains("invalid_credentials") ||
+                    lowercasedMessage.contains("invalid login credentials")
+                ) {
+                    return "Invalid email or password."
+                }
+            }
+            return e.errorDescription ?? "Something went wrong."
+        }
         if let urlError = error as? URLError {
             switch urlError.code {
             case .notConnectedToInternet, .networkConnectionLost, .dataNotAllowed:
@@ -273,7 +284,7 @@ final class AuthService {
                     // Supabase not wired up — fall back to local demo mode.
                     self.bypassForDemo()
                 } else {
-                    self.error = e.errorDescription
+                    self.error = Self.message(for: e)
                 }
             }
         } catch {
