@@ -18,6 +18,16 @@ satisfaction.
 - View friends' activity, likes, suggestions, and coffee chat requests
 - Block/report users and delete an account in app
 
+## Demo
+
+| Home | Ranking | Profile |
+|---|---|---|
+| <img src="docs/screenshots/home.png" width="220" alt="Brew home screen"> | <img src="docs/screenshots/head-to-head.png" width="220" alt="Head-to-head ranking screen"> | <img src="docs/screenshots/profile.png" width="220" alt="Profile and taste identity screen"> |
+
+| Drink Detail | Ranking Intro | Year in Brew |
+|---|---|---|
+| <img src="docs/screenshots/drink-detail.png" width="220" alt="Drink detail screen"> | <img src="docs/screenshots/ranking-intro.png" width="220" alt="Ranking introduction screen"> | <img src="docs/screenshots/year-in-brew.png" width="220" alt="Year in Brew recap screen"> |
+
 ## Tech Stack
 
 - **UI:** SwiftUI, iOS 17+
